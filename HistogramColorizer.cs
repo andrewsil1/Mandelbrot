@@ -18,6 +18,7 @@ internal static class HistogramColorizer
         int[] histogram = new int[maxIterations + 1];
         int escapedCount = 0;
 
+        // Interior pixels are stored as -1 and excluded from the histogram.
         foreach (int iteration in iterations)
         {
             if (iteration >= 0)
@@ -30,6 +31,9 @@ internal static class HistogramColorizer
         int[] cumulative = new int[histogram.Length];
         int running = 0;
 
+        // Convert the histogram to a cumulative distribution. This spreads
+        // colors according to how many pixels escaped at each iteration count,
+        // which avoids harsh bands compared with direct iteration coloring.
         for (int i = 0; i < histogram.Length; i++)
         {
             running += histogram[i];
@@ -60,6 +64,8 @@ internal static class HistogramColorizer
     {
         t = Math.Clamp(t, 0, 1);
 
+        // The palette is piecewise linear, with SmoothStep easing to soften
+        // transitions between adjacent color stops.
         for (int i = 1; i < Palette.Length; i++)
         {
             (double stop, Rgb color) = Palette[i];

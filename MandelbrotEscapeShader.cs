@@ -18,10 +18,15 @@ public readonly partial struct MandelbrotEscapeShader(
     {
         int x = ThreadIds.X;
         int y = ThreadIds.Y;
+
+        // Map this GPU thread's pixel to a point in the complex plane.
         double cr = left + x * stepX;
         double ci = top - y * stepY;
         int index = y * width + x;
 
+        // Fast interior tests for the main cardioid and the period-2 bulb.
+        // These points never escape, so skipping the full loop saves a lot of
+        // work near the largest solid regions of the set.
         double shiftedX = cr - 0.25;
         double q = shiftedX * shiftedX + ci * ci;
 
@@ -37,6 +42,8 @@ public readonly partial struct MandelbrotEscapeShader(
         double oldZi = 0;
         int check = 20;
 
+        // Iterate z = z^2 + c until the orbit escapes radius 2, or until the
+        // iteration budget is exhausted.
         for (int i = 0; i < maxIterations; i++)
         {
             double zr2 = zr * zr;
@@ -51,6 +58,8 @@ public readonly partial struct MandelbrotEscapeShader(
             zi = 2.0 * zr * zi + ci;
             zr = zr2 - zi2 + cr;
 
+            // Periodicity checking catches many interior points that settle
+            // into a repeating orbit without spending the whole iteration cap.
             if (i == check)
             {
                 double deltaR = zr - oldZr;

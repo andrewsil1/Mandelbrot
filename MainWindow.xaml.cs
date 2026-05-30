@@ -22,6 +22,9 @@ public partial class MainWindow : Window
     private int imageWidth = InitialImageWidth;
     private int imageHeight = InitialImageHeight;
     private bool isRendering;
+
+    // A resize or click can arrive while the GPU is still busy. Coalesce those
+    // changes into one follow-up render instead of starting overlapping jobs.
     private bool renderQueued;
 
     public MainWindow()
@@ -68,6 +71,9 @@ public partial class MainWindow : Window
         {
             int maxIterations = IterationBudget.ForScale(renderView.Scale);
             Stopwatch stopwatch = Stopwatch.StartNew();
+
+            // Keep the UI thread responsive while ComputeSharp dispatches and
+            // reads back the GPU work.
             int[] pixels = await Task.Run(() =>
             {
                 MandelbrotRenderer renderer = new(renderWidth, renderHeight);
@@ -75,6 +81,9 @@ public partial class MainWindow : Window
             });
             stopwatch.Stop();
 
+            // A resize may replace the bitmap while this render is running. If
+            // that happened, discard the stale pixels and immediately queue a
+            // render for the newest dimensions.
             if (ReferenceEquals(renderBitmap, bitmap) && renderWidth == imageWidth && renderHeight == imageHeight)
             {
                 renderBitmap.WritePixels(
@@ -155,6 +164,8 @@ public partial class MainWindow : Window
             return;
         }
 
+        // Corner dragging emits many SizeChanged events; waiting briefly avoids
+        // flooding the GPU with intermediate frame sizes.
         resizeTimer.Stop();
         resizeTimer.Start();
     }
@@ -192,6 +203,8 @@ public partial class MainWindow : Window
 
         FractalImage.Source = bitmap;
 
+        // Reset returns to the full set. Resize preserves the current vertical
+        // complex-plane span and only changes the horizontal span for aspect.
         view = resetView
             ? MandelbrotView.FullSet(imageWidth, imageHeight)
             : view.WithAspect((double)imageWidth / imageHeight);
@@ -203,6 +216,9 @@ public partial class MainWindow : Window
     private (int Width, int Height) GetRenderSize()
     {
         DpiScale dpi = VisualTreeHelper.GetDpi(this);
+
+        // WPF reports device-independent units; the bitmap uses physical
+        // pixels so high-DPI displays still get a crisp computed image.
         int width = Math.Max(64, (int)Math.Round(RenderHost.ActualWidth * dpi.DpiScaleX));
         int height = Math.Max(64, (int)Math.Round(RenderHost.ActualHeight * dpi.DpiScaleY));
 

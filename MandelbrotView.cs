@@ -6,6 +6,8 @@ public readonly record struct MandelbrotView(double CenterX, double CenterY, dou
 
     public double Top => CenterY + Height * 0.5;
 
+    // Zoom level is measured from the vertical span so resizing wider or
+    // narrower does not change the iteration budget.
     public double Scale => Height / 4.0;
 
     public static MandelbrotView FullSet(int pixelWidth, int pixelHeight)
@@ -35,6 +37,8 @@ public readonly record struct MandelbrotView(double CenterX, double CenterY, dou
 
     public MandelbrotView WithAspect(double aspect)
     {
+        // Preserve the current zoom and center while changing the horizontal
+        // span to match the render target.
         return new MandelbrotView(CenterX, CenterY, Height * aspect, Height);
     }
 }

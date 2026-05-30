@@ -13,6 +13,9 @@ public sealed class MandelbrotRenderer(int width, int height)
 
         using ReadWriteBuffer<int> iterationBuffer = device.AllocateReadWriteBuffer<int>(pixelCount);
 
+        // The compute shader writes one escape count per pixel. Coloring stays
+        // on the CPU because histogram coloring needs a whole-image cumulative
+        // distribution after every pixel has been evaluated.
         device.For(
             width,
             height,
