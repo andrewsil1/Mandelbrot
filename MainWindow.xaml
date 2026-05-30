@@ -1,0 +1,74 @@
+<Window x:Class="MandelbrotGpu.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Mandelbrot GPU Explorer"
+        MinWidth="900"
+        MinHeight="650"
+        Width="1200"
+        Height="850"
+        Background="#111318">
+    <DockPanel>
+        <Border DockPanel.Dock="Top"
+                Background="#191D24"
+                BorderBrush="#2B313B"
+                BorderThickness="0,0,0,1"
+                Padding="12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button x:Name="ResetButton"
+                            Width="92"
+                            Height="32"
+                            Margin="0,0,8,0"
+                            Click="ResetButton_Click"
+                            Content="Reset" />
+                    <Button x:Name="BackButton"
+                            Width="92"
+                            Height="32"
+                            Margin="0,0,16,0"
+                            Click="BackButton_Click"
+                            Content="Back" />
+                    <TextBlock VerticalAlignment="Center"
+                               Foreground="#CBD5E1"
+                               FontSize="13"
+                               Text="Left click zooms in; right click zooms out." />
+                </StackPanel>
+
+                <TextBlock x:Name="ViewText"
+                           Grid.Column="1"
+                           Margin="16,0"
+                           VerticalAlignment="Center"
+                           Foreground="#E5E7EB"
+                           FontFamily="Consolas"
+                           FontSize="13"
+                           TextTrimming="CharacterEllipsis" />
+
+                <TextBlock x:Name="StatusText"
+                           Grid.Column="2"
+                           VerticalAlignment="Center"
+                           Foreground="#9CA3AF"
+                           FontFamily="Consolas"
+                           FontSize="13" />
+            </Grid>
+        </Border>
+
+        <Border x:Name="RenderHost"
+                Margin="12"
+                Background="#05070A"
+                BorderBrush="#303744"
+                BorderThickness="1"
+                ClipToBounds="True"
+                SizeChanged="RenderHost_SizeChanged">
+            <Image x:Name="FractalImage"
+                   Stretch="Fill"
+                   SnapsToDevicePixels="True"
+                   MouseLeftButtonDown="FractalImage_MouseLeftButtonDown"
+                   MouseRightButtonDown="FractalImage_MouseRightButtonDown" />
+        </Border>
+    </DockPanel>
+</Window>
