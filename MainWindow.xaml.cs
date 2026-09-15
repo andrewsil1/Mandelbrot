@@ -9,15 +9,20 @@ namespace MandelbrotGpu;
 
 public partial class MainWindow : Window
 {
+    // The starting bitmap size is only a fallback. Once the window is loaded,
+    // rendering uses the actual WPF host size multiplied by the display DPI.
     private const int InitialImageWidth = 1600;
     private const int InitialImageHeight = 1050;
+
+    // Left and right click zoom symmetrically by four so a right click roughly
+    // backs out one left-click step around the selected point.
     private const double ZoomInFactor = 0.25;
     private const double ZoomOutFactor = 4.0;
 
-    private readonly Stack<MandelbrotView> history = [];
+    private readonly Stack<MandelbrotViewport> history = [];
     private readonly DispatcherTimer resizeTimer;
 
-    private MandelbrotView view = MandelbrotView.FullSet(InitialImageWidth, InitialImageHeight);
+    private MandelbrotViewport view = MandelbrotViewport.FullSet(InitialImageWidth, InitialImageHeight);
     private WriteableBitmap? bitmap;
     private int imageWidth = InitialImageWidth;
     private int imageHeight = InitialImageHeight;
@@ -31,6 +36,8 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
 
+        // Resize can fire dozens of times during a corner drag. Debouncing
+        // keeps the app responsive and renders only the final settled size.
         resizeTimer = new DispatcherTimer
         {
             Interval = TimeSpan.FromMilliseconds(250)
@@ -48,6 +55,8 @@ public partial class MainWindow : Window
     {
         if (isRendering)
         {
+            // Do not overlap render jobs. ComputeSharp work plus readback can
+            // hold GPU resources; coalescing produces one newest-frame render.
             renderQueued = true;
             return;
         }
@@ -64,17 +73,19 @@ public partial class MainWindow : Window
 
         int renderWidth = imageWidth;
         int renderHeight = imageHeight;
-        MandelbrotView renderView = view;
+        MandelbrotViewport renderView = view;
         WriteableBitmap renderBitmap = bitmap;
 
         try
         {
+            // Capture all mutable UI state before the background task starts.
+            // Later resize/click events update fields and queue another render.
             int maxIterations = IterationBudget.ForScale(renderView.Scale);
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Keep the UI thread responsive while ComputeSharp dispatches and
             // reads back the GPU work.
-            int[] pixels = await Task.Run(() =>
+            RenderResult result = await Task.Run(() =>
             {
                 MandelbrotRenderer renderer = new(renderWidth, renderHeight);
                 return renderer.Render(renderView, maxIterations);
@@ -86,9 +97,11 @@ public partial class MainWindow : Window
             // render for the newest dimensions.
             if (ReferenceEquals(renderBitmap, bitmap) && renderWidth == imageWidth && renderHeight == imageHeight)
             {
+                // WPF expects BGRA32 packed into Int32 pixels. The renderer has
+                // already converted escape counts through the histogram palette.
                 renderBitmap.WritePixels(
                     new Int32Rect(0, 0, renderWidth, renderHeight),
-                    pixels,
+                    result.Pixels,
                     renderWidth * sizeof(int),
                     0);
             }
@@ -97,7 +110,10 @@ public partial class MainWindow : Window
                 renderQueued = true;
             }
 
-            StatusText.Text = $"{renderWidth}x{renderHeight}  {maxIterations:n0} iter  {stopwatch.ElapsedMilliseconds:n0} ms";
+            string repairCapText = result.UnresolvedGlitchCount > 0
+                ? $"  repair cap={result.FinalRepairLimit:n0}"
+                : string.Empty;
+            StatusText.Text = $"{renderWidth}x{renderHeight}  {result.Mode}  refs={result.ReferencePasses:n0}  {maxIterations:n0} iter  repaired={result.RepairedCount:n0}  unresolved={result.UnresolvedGlitchCount:n0}/{result.InitialGlitchCount:n0}{repairCapText}  {stopwatch.ElapsedMilliseconds:n0} ms";
             BackButton.IsEnabled = history.Count > 0;
         }
         catch (Exception ex)
@@ -119,25 +135,43 @@ public partial class MainWindow : Window
 
     private async void FractalImage_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (!TryGetComplexPoint(e.GetPosition(FractalImage), out double centerX, out double centerY))
+        if (!TryGetComplexPoint(e.GetPosition(FractalImage), out MpfrComplex? center) || center is null)
         {
             return;
         }
 
+        // Save the exact MPFR viewport so Back restores deep coordinates, not
+        // just their rounded display representation.
         history.Push(view);
-        view = view.Zoom(centerX, centerY, ZoomInFactor);
+        try
+        {
+            view = view.Zoom(center, ZoomInFactor);
+        }
+        finally
+        {
+            center.Dispose();
+        }
+
         await RenderAsync();
     }
 
     private async void FractalImage_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (!TryGetComplexPoint(e.GetPosition(FractalImage), out double centerX, out double centerY))
+        if (!TryGetComplexPoint(e.GetPosition(FractalImage), out MpfrComplex? center) || center is null)
         {
             return;
         }
 
         history.Push(view);
-        view = view.Zoom(centerX, centerY, ZoomOutFactor);
+        try
+        {
+            view = view.Zoom(center, ZoomOutFactor);
+        }
+        finally
+        {
+            center.Dispose();
+        }
+
         await RenderAsync();
     }
 
@@ -150,8 +184,10 @@ public partial class MainWindow : Window
 
     private async void BackButton_Click(object sender, RoutedEventArgs e)
     {
-        if (history.TryPop(out MandelbrotView previous))
+        if (history.TryPop(out MandelbrotViewport? previous))
         {
+            // The saved view may have been captured at a different window
+            // aspect. Restore center/zoom, then adapt to the current shape.
             view = previous.WithAspect((double)imageWidth / imageHeight);
             await RenderAsync();
         }
@@ -206,7 +242,7 @@ public partial class MainWindow : Window
         // Reset returns to the full set. Resize preserves the current vertical
         // complex-plane span and only changes the horizontal span for aspect.
         view = resetView
-            ? MandelbrotView.FullSet(imageWidth, imageHeight)
+            ? MandelbrotViewport.FullSet(imageWidth, imageHeight)
             : view.WithAspect((double)imageWidth / imageHeight);
 
         UpdateViewText();
@@ -219,16 +255,15 @@ public partial class MainWindow : Window
 
         // WPF reports device-independent units; the bitmap uses physical
         // pixels so high-DPI displays still get a crisp computed image.
-        int width = Math.Max(64, (int)Math.Round(RenderHost.ActualWidth * dpi.DpiScaleX));
-        int height = Math.Max(64, (int)Math.Round(RenderHost.ActualHeight * dpi.DpiScaleY));
+        int width = global::System.Math.Max(64, (int)global::System.Math.Round(RenderHost.ActualWidth * dpi.DpiScaleX));
+        int height = global::System.Math.Max(64, (int)global::System.Math.Round(RenderHost.ActualHeight * dpi.DpiScaleY));
 
         return (width, height);
     }
 
-    private bool TryGetComplexPoint(Point position, out double x, out double y)
+    private bool TryGetComplexPoint(Point position, out MpfrComplex? point)
     {
-        x = 0;
-        y = 0;
+        point = null;
 
         if (FractalImage.ActualWidth <= 0 || FractalImage.ActualHeight <= 0)
         {
@@ -238,18 +273,20 @@ public partial class MainWindow : Window
         double normalizedX = position.X / FractalImage.ActualWidth;
         double normalizedY = position.Y / FractalImage.ActualHeight;
 
+        // Ignore clicks in letterboxed or otherwise invalid image space. The
+        // current layout should normally keep the image aligned with the host,
+        // but this protects against transient WPF sizing states.
         if (normalizedX is < 0 or > 1 || normalizedY is < 0 or > 1)
         {
             return false;
         }
 
-        x = view.Left + normalizedX * view.Width;
-        y = view.Top - normalizedY * view.Height;
+        point = view.PointAt(normalizedX, normalizedY);
         return true;
     }
 
     private void UpdateViewText()
     {
-        ViewText.Text = $"center=({view.CenterX:G17}, {view.CenterY:G17})  scale={view.Scale:E3}";
+        ViewText.Text = view.Describe();
     }
 }

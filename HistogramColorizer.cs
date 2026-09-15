@@ -2,6 +2,10 @@ namespace MandelbrotGpu;
 
 internal static class HistogramColorizer
 {
+    // Histogram coloring maps escape counts through the cumulative escape-count
+    // distribution, so colors reflect the population of the current image
+    // rather than fixed iteration bands. The palette is stored as BGRA later
+    // because WPF's WriteableBitmap uses PixelFormats.Bgra32.
     private static readonly (double Stop, Rgb Color)[] Palette =
     [
         (0.00, new Rgb(8, 12, 22)),
@@ -23,6 +27,8 @@ internal static class HistogramColorizer
         {
             if (iteration >= 0)
             {
+                // The shader stores the first iteration whose orbit exceeds
+                // radius 2. Values at or below maxIterations are valid bins.
                 histogram[iteration]++;
                 escapedCount++;
             }
@@ -48,6 +54,9 @@ internal static class HistogramColorizer
 
             if (iteration < 0 || escapedCount == 0)
             {
+                // Interior and still-unresolved glitch pixels are rendered
+                // dark. A visible dark speckle after repair usually means the
+                // glitch count exceeded the current final-repair budget.
                 pixels[i] = unchecked((int)0xFF020308);
                 continue;
             }
@@ -62,7 +71,7 @@ internal static class HistogramColorizer
 
     private static Rgb SamplePalette(double t)
     {
-        t = Math.Clamp(t, 0, 1);
+        t = global::System.Math.Clamp(t, 0, 1);
 
         // The palette is piecewise linear, with SmoothStep easing to soften
         // transitions between adjacent color stops.
@@ -99,7 +108,7 @@ internal static class HistogramColorizer
 
         private static byte LerpChannel(byte a, byte b, double t)
         {
-            return (byte)Math.Round(a + (b - a) * t);
+            return (byte)global::System.Math.Round(a + (b - a) * t);
         }
     }
 }

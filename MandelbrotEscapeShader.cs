@@ -14,6 +14,9 @@ public readonly partial struct MandelbrotEscapeShader(
     int width,
     int maxIterations) : IComputeShader
 {
+    // Direct FP64 mode: one GPU thread evaluates one pixel from z = 0. This is
+    // the simplest and fastest path while the viewport is not so small that
+    // adjacent pixel coordinates collapse into the same double value.
     public void Execute()
     {
         int x = ThreadIds.X;
@@ -32,7 +35,7 @@ public readonly partial struct MandelbrotEscapeShader(
 
         if (q * (q + shiftedX) <= 0.25 * ci * ci || (cr + 1.0) * (cr + 1.0) + ci * ci <= 0.0625)
         {
-            iterations[index] = -1;
+            iterations[index] = EscapeClassification.Interior;
             return;
         }
 
@@ -67,7 +70,7 @@ public readonly partial struct MandelbrotEscapeShader(
 
                 if (deltaR * deltaR + deltaI * deltaI < 0.000000000000000000000001)
                 {
-                    iterations[index] = -1;
+                    iterations[index] = EscapeClassification.Interior;
                     return;
                 }
 
@@ -77,6 +80,6 @@ public readonly partial struct MandelbrotEscapeShader(
             }
         }
 
-        iterations[index] = -1;
+        iterations[index] = EscapeClassification.Interior;
     }
 }
