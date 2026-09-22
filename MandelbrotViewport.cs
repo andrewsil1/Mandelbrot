@@ -90,6 +90,23 @@ public sealed class MandelbrotViewport
         return new MpfrComplex(x, y);
     }
 
+    public MpfrComplex PointAtPixel(int x, int y, int pixelWidth, int pixelHeight)
+    {
+        // Use the same reciprocal steps and half-pixel offsets as GPU delta
+        // construction. Dividing normalized coordinates first rounds at a
+        // different point, which is avoidable for reference/repair pixels.
+        using MpfrFloat width = Width;
+        using MpfrFloat halfWidth = width.Multiply(0.5);
+        using MpfrFloat halfHeight = Height.Multiply(0.5);
+        using MpfrFloat left = CenterX.Subtract(halfWidth);
+        using MpfrFloat top = CenterY.Add(halfHeight);
+        using MpfrFloat stepX = width.Multiply(1.0 / pixelWidth);
+        using MpfrFloat stepY = Height.Multiply(1.0 / pixelHeight);
+        using MpfrFloat offsetX = stepX.Multiply(x + 0.5);
+        using MpfrFloat offsetY = stepY.Multiply(y + 0.5);
+        return new MpfrComplex(left.Add(offsetX), top.Subtract(offsetY));
+    }
+
     public string Describe()
     {
         return $"center=({CenterX.ToDisplayString()}, {CenterY.ToDisplayString()})  scale={Scale:E3}";

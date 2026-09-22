@@ -1,0 +1,158 @@
+C:\Users\andrewsi\OneDrive\Documents\Mandelbrot\MandelbrotGpu.csproj : warning NU1701: Package 'Baseclass.Contrib.Nuget.Output 2.4.1' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0-windows7.0'. This package may not be fully compatible with your project.
+C:\Users\andrewsi\OneDrive\Documents\Mandelbrot\MandelbrotGpu.csproj : warning NU1701: Package 'Math.Gmp.Native.NET 2.0.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0-windows7.0'. This package may not be fully compatible with your project.
+C:\Users\andrewsi\OneDrive\Documents\Mandelbrot\MandelbrotGpu.csproj : warning NU1701: Package 'Math.Mpfr.Native.NET 2.0.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0-windows7.0'. This package may not be fully compatible with your project.
+Diagnostic policy passed: Debug on, Release off, explicit profiling override (GPU-free).
+GPU-free delayed-readback checks passed: interval bounds, first/periodic/final scheduling.
+GPU-free safety checks passed: reverse cleanup, cleanup failure, idempotence, dispatch brake, durable journal.
+Scaling stage configuration and numerical/dispatch stop checks passed (GPU-free).
+GPU-free timing checks passed: exclusive stages, inclusive envelopes, signed residual.
+GPU-free journal group checks passed: durable intent, bounded checkpoints, early exit, failure, abort, write failure.
+GPU-free completion timing passed: cold recording and late FIFO consumption excluded; genuine 1094ms completion still trips the unchanged brake.
+GPU-free bounded queue checks passed: capacities, FIFO, backpressure, drain, failure/tail lifetime, device-loss status.
+GPU-free BLA profiling and minimum-block policy passed.
+GPU-free suspended UI checks passed: Reset/Back/click/resize preserve the bitmap/view and submit no work.
+GPU-free fence wait checks passed: both cleanup owners, 10000 races, 2000 native waits; handles 409->409, failure code=6; patched runtime loaded.
+Production FMA arithmetic passed: 3086 GPU pairs, 10240 MPFR product/square/scaling checks, explicit fused residual.
+Repair budget passed: 1023/1024/1025/1040 tails, partial repair, hard iteration ceiling, trusted preservation.
+Sparse retry selector passed: 48 masks, centroid/tie/exclusion oracle, trusted preservation.
+FP32 escaping: 117/153 trusted, all-pixel MPFR and slice equivalence passed.
+FP32 deep-escaping: 153/153 trusted, all-pixel MPFR and slice equivalence passed.
+FP32 tip: 0/153 trusted, all-pixel MPFR and slice equivalence passed.
+FP32 i-boundary: 0/153 trusted, all-pixel MPFR and slice equivalence passed.
+FP32 range-bypass: 0/153 trusted, all-pixel MPFR and slice equivalence passed.
+FP32 filament: 0/153 trusted, all-pixel MPFR and slice equivalence passed.
+FP32 filament-deeper: 0/153 trusted, all-pixel MPFR and slice equivalence passed.
+FP32 component: 153/153 trusted, all-pixel MPFR and slice equivalence passed.
+FP32 transition: 0/153 trusted, all-pixel MPFR and slice equivalence passed.
+FP32 multi-batch/tail raw MPFR check passed.
+No-journal attribution passed: exact quiet image, exclusive per-mode submission/wait accounting.
+Sparse/full equivalence passed (1, 7, 65, 137 pixels; reused buffers).
+Retry budget and sparse merge passed: no unnecessary retries, trusted pixels preserved.
+DirectFloat64: RenderValidation { Samples = 64, Mismatches = 0, Unresolved = 0 }; Reference: 0.0 ms; BLA build: 0.0 ms; upload: 0.0 ms; dispatch: 15.0 ms (FP64: 0.0, DD: 0.0); readback/wait: 0.9 ms; slice readbacks: 0 (FP64/DD: 0/0, skipped: 0, bytes: 0); repair: 0.0 ms; color: 0.1 ms; journal: 5.2 ms (serialization: 0.8, file: 4.5, writes: 2, groups: 0, records: 2); slice scan: 0.0 ms; validation: 1.1 ms; other host: 1.4 ms; total: 23.7 ms; slice loops FP64/DD: 0.0/0.0 ms; batches: 1, longest: 0.4 ms; DD dispatched threads: 0; async: 0, peak in-flight: 0, submit/wait: 0.0/0.0 ms; perturbation pixel evaluations: 0; rebases: 0; skipped iterations: 0; scalar iterations: 0
+PerturbationFloat64: RenderValidation { Samples = 64, Mismatches = 0, Unresolved = 0 }; Reference: 0.5 ms; BLA build: 0.2 ms; upload: 1.9 ms; dispatch: 0.7 ms (FP64: 0.7, DD: 0.0); readback/wait: 0.2 ms; slice readbacks: 2 (FP64/DD: 2/0, skipped: 0, bytes: 18,760); repair: 0.0 ms; color: 0.0 ms; journal: 4.4 ms (serialization: 0.7, file: 3.8, writes: 2, groups: 1, records: 6); slice scan: 0.0 ms; validation: 30.7 ms; other host: 2.6 ms; total: 41.2 ms; slice loops FP64/DD: 5.4/0.0 ms; batches: 2, longest: 0.4 ms; DD dispatched threads: 0; async: 2, peak in-flight: 1, submit/wait: 0.2/0.5 ms; perturbation pixel evaluations: 2,345; rebases: 2,345; skipped iterations: 0; scalar iterations: 600,320
+PerturbationFloat64: RenderValidation { Samples = 64, Mismatches = 0, Unresolved = 0 }; Reference: 0.6 ms; BLA build: 0.3 ms; upload: 1.6 ms; dispatch: 0.4 ms (FP64: 0.4, DD: 0.0); readback/wait: 0.2 ms; slice readbacks: 2 (FP64/DD: 2/0, skipped: 0, bytes: 18,760); repair: 0.0 ms; color: 0.0 ms; journal: 4.3 ms (serialization: 0.1, file: 4.1, writes: 2, groups: 1, records: 6); slice scan: 0.0 ms; validation: 26.5 ms; other host: 2.4 ms; total: 36.1 ms; slice loops FP64/DD: 4.9/0.0 ms; batches: 2, longest: 0.2 ms; DD dispatched threads: 0; async: 2, peak in-flight: 1, submit/wait: 0.1/0.3 ms; perturbation pixel evaluations: 2,345; rebases: 2,345; skipped iterations: 590,940; scalar iterations: 9,380
+Raw double-double pixel-center validation passed.
+Batched dispatch passed: 8,191 pixels, every output written.
+Batched dispatch passed: 8,192 pixels, every output written.
+Batched dispatch passed: 8,193 pixels, every output written.
+Batched dispatch passed: 4,194,239 pixels, every output written.
+Batched dispatch passed: 4,194,240 pixels, every output written.
+Batched dispatch passed: 4,194,241 pixels, every output written.
+Batched dispatch passed: 7,349,328 pixels, every output written.
+escaping reference/FP64/none: MPFR mismatches=0, unresolved=25, rebase=0, skip=0, scalar=306
+escaping reference/FP64/rebase: MPFR mismatches=0, unresolved=1, rebase=98, skip=0, scalar=405
+escaping reference/FP64/bla: MPFR mismatches=0, unresolved=1, rebase=98, skip=0, scalar=405
+escaping reference/DD/none: MPFR mismatches=0, unresolved=24, rebase=0, skip=0, scalar=307
+escaping reference/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=98, skip=0, scalar=406
+escaping reference/DD/bla: MPFR mismatches=0, unresolved=0, rebase=98, skip=0, scalar=406
+escaping reference/pipeline: validated, repaired=0, unresolved=0
+DirectFloat transition/FP64/none: MPFR mismatches=0, unresolved=42, rebase=0, skip=0, scalar=634176
+DirectFloat transition/FP64/rebase: MPFR mismatches=0, unresolved=11, rebase=1109, skip=0, scalar=659130
+DirectFloat transition/FP64/bla: MPFR mismatches=0, unresolved=11, rebase=1109, skip=0, scalar=659130
+DirectFloat transition/DD/none: MPFR mismatches=0, unresolved=38, rebase=0, skip=0, scalar=634355
+DirectFloat transition/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=1136, skip=0, scalar=659553
+DirectFloat transition/DD/bla: MPFR mismatches=0, unresolved=0, rebase=1136, skip=0, scalar=659553
+DirectFloat transition/pipeline: validated, repaired=11, unresolved=0
+device-loss view/FP64/none: MPFR mismatches=0, unresolved=117, rebase=0, skip=0, scalar=781725
+device-loss view/FP64/rebase: MPFR mismatches=0, unresolved=33, rebase=1380, skip=0, scalar=897678
+device-loss view/FP64/bla: MPFR mismatches=0, unresolved=33, rebase=1380, skip=0, scalar=897678
+device-loss view/DD/none: MPFR mismatches=0, unresolved=116, rebase=0, skip=0, scalar=781727
+device-loss view/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=1482, skip=0, scalar=902354
+device-loss view/DD/bla: MPFR mismatches=0, unresolved=0, rebase=1482, skip=0, scalar=902354
+device-loss view/pipeline: validated, repaired=33, unresolved=0
+suspended zoom transition/FP64/none: MPFR mismatches=0, unresolved=16, rebase=0, skip=0, scalar=598996
+suspended zoom transition/FP64/rebase: MPFR mismatches=0, unresolved=7, rebase=919, skip=0, scalar=605768
+suspended zoom transition/FP64/bla: MPFR mismatches=0, unresolved=7, rebase=919, skip=0, scalar=605768
+suspended zoom transition/DD/none: MPFR mismatches=0, unresolved=16, rebase=0, skip=0, scalar=598996
+suspended zoom transition/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=922, skip=0, scalar=605859
+suspended zoom transition/DD/bla: MPFR mismatches=0, unresolved=0, rebase=922, skip=0, scalar=605859
+suspended zoom transition/pipeline: validated, repaired=7, unresolved=0
+suspended zoom next click/FP64/none: MPFR mismatches=0, unresolved=17, rebase=0, skip=0, scalar=598509
+suspended zoom next click/FP64/rebase: MPFR mismatches=0, unresolved=7, rebase=897, skip=0, scalar=602320
+suspended zoom next click/FP64/bla: MPFR mismatches=0, unresolved=7, rebase=897, skip=0, scalar=602320
+suspended zoom next click/DD/none: MPFR mismatches=0, unresolved=17, rebase=0, skip=0, scalar=598509
+suspended zoom next click/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=942, skip=0, scalar=603447
+suspended zoom next click/DD/bla: MPFR mismatches=0, unresolved=0, rebase=942, skip=0, scalar=603447
+suspended zoom next click/pipeline: validated, repaired=7, unresolved=0
+tip boundary/FP64/none: MPFR mismatches=0, unresolved=17, rebase=0, skip=0, scalar=2157
+tip boundary/FP64/rebase: MPFR mismatches=0, unresolved=17, rebase=190, skip=0, scalar=2165
+tip boundary/FP64/bla: MPFR mismatches=0, unresolved=17, rebase=190, skip=0, scalar=2165
+tip boundary/DD/none: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=2255
+tip boundary/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=219, skip=0, scalar=2255
+tip boundary/DD/bla: MPFR mismatches=0, unresolved=0, rebase=219, skip=0, scalar=2255
+tip boundary/pipeline: validated, repaired=17, unresolved=0
+seahorse filament/FP64/none: MPFR mismatches=0, unresolved=7, rebase=0, skip=0, scalar=339171
+seahorse filament/FP64/rebase: MPFR mismatches=0, unresolved=0, rebase=802, skip=0, scalar=342378
+seahorse filament/FP64/bla: MPFR mismatches=0, unresolved=0, rebase=802, skip=0, scalar=342378
+seahorse filament/DD/none: MPFR mismatches=0, unresolved=7, rebase=0, skip=0, scalar=339171
+seahorse filament/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=802, skip=0, scalar=342378
+seahorse filament/DD/bla: MPFR mismatches=0, unresolved=0, rebase=802, skip=0, scalar=342378
+seahorse filament/pipeline: validated, repaired=0, unresolved=0
+BLA escape transition/FP64/none: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=472005
+BLA escape transition/FP64/rebase: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=472005
+BLA escape transition/FP64/bla: MPFR mismatches=0, unresolved=0, rebase=0, skip=237204, scalar=234801
+BLA escape transition/DD/none: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=472005
+BLA escape transition/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=472005
+BLA escape transition/DD/bla: MPFR mismatches=0, unresolved=0, rebase=0, skip=14380, scalar=457625
+BLA escape transition/pipeline: validated, repaired=0, unresolved=0
+period-three component/FP64/none: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=156672
+period-three component/FP64/rebase: MPFR mismatches=0, unresolved=0, rebase=153, skip=0, scalar=156672
+period-three component/FP64/bla: MPFR mismatches=0, unresolved=0, rebase=153, skip=51744, scalar=104928
+period-three component/DD/none: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=156672
+period-three component/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=153, skip=0, scalar=156672
+period-three component/DD/bla: MPFR mismatches=0, unresolved=0, rebase=153, skip=0, scalar=156672
+period-three component/pipeline: validated, repaired=0, unresolved=0
+DD depth/FP64/none: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=472005
+DD depth/FP64/rebase: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=472005
+DD depth/FP64/bla: MPFR mismatches=0, unresolved=0, rebase=0, skip=452112, scalar=19893
+DD depth/DD/none: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=472005
+DD depth/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=472005
+DD depth/DD/bla: MPFR mismatches=0, unresolved=0, rebase=0, skip=396116, scalar=75889
+DD depth/pipeline: validated, repaired=0, unresolved=0
+preperiodic boundary 28/FP64/none: MPFR mismatches=0, unresolved=1, rebase=0, skip=0, scalar=11782
+preperiodic boundary 28/FP64/rebase: MPFR mismatches=0, unresolved=1, rebase=95, skip=0, scalar=11782
+preperiodic boundary 28/FP64/bla: MPFR mismatches=0, unresolved=1, rebase=95, skip=5650, scalar=6132
+preperiodic boundary 28/DD/none: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=11791
+preperiodic boundary 28/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=96, skip=0, scalar=11791
+preperiodic boundary 28/DD/bla: MPFR mismatches=0, unresolved=0, rebase=96, skip=3732, scalar=8059
+preperiodic boundary 28/pipeline: validated, repaired=1, unresolved=0
+preperiodic boundary 60/FP64/none: MPFR mismatches=0, unresolved=1, rebase=0, skip=0, scalar=24883
+preperiodic boundary 60/FP64/rebase: MPFR mismatches=0, unresolved=1, rebase=123, skip=0, scalar=24883
+preperiodic boundary 60/FP64/bla: MPFR mismatches=0, unresolved=1, rebase=123, skip=18714, scalar=6169
+preperiodic boundary 60/DD/none: MPFR mismatches=0, unresolved=0, rebase=0, skip=0, scalar=24892
+preperiodic boundary 60/DD/rebase: MPFR mismatches=0, unresolved=0, rebase=124, skip=0, scalar=24892
+preperiodic boundary 60/DD/bla: MPFR mismatches=0, unresolved=0, rebase=124, skip=16676, scalar=8216
+preperiodic boundary 60/pipeline: validated, repaired=1, unresolved=0
+Transition fallback passed: 256x130, elapsed=0.69s, refs=2, FP64 pixels=33280, DD pixels=2063, repaired=7; Reference: 12.3 ms; BLA build: 10.0 ms; upload: 3.5 ms; dispatch: 184.0 ms (FP64: 52.7, DD: 131.3); readback/wait: 4.3 ms; slice readbacks: 45 (FP64/DD: 30/15, skipped: 117, bytes: 2,120,580); repair: 11.7 ms; color: 1.4 ms; journal: 84.7 ms (serialization: 1.1, file: 83.5, writes: 42, groups: 21, records: 366); slice scan: 0.1 ms; validation: 374.5 ms; other host: 8.3 ms; total: 694.8 ms; slice loops FP64/DD: 112.6/161.8 ms; batches: 162, longest: 15.0 ms; DD dispatched threads: 111,402; async: 162, peak in-flight: 2, submit/wait: 8.4/175.6 ms; perturbation pixel evaluations: 35,343; rebases: 287,017; skipped iterations: 0; scalar iterations: 154,399,809
+Acceleration validation passed: 11,740 rebases and 1,196,328 skipped iterations exercised.
+Sparse BLA raw/profile validation passed: 768-bit MPFR, alternate references, reversed/duplicate-free sparse maps, 8192 seam, exact profiling equivalence; skipped=18782800, detailed searches=17251936, accepted=1687360 (Debug-only counters).
+Dispatch policy, direct/FP64 batch seams, and device-loss classification passed.
+Slice fixture escaping reference: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture tip boundary: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture period-three: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture filament: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture BLA escape: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture DD depth: sliced/unsliced trusted counts match 768-bit MPFR.
+Delayed FP64/DD readback validation passed: raw classifications and work counters unchanged, 924 copies skipped.
+Delayed readback FP64/DD batch seams passed; sparse reference reuse also uses interval 8.
+Slice validation passed: FP64/DD state resume, BLA boundaries, sparse maps, batch/reference reuse, journal metadata.
+FP64/DD journal group equivalence passed: identical images/dispatches, fewer checkpoints, MPFR agreement.
+Slice fixture escaping reference: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture tip boundary: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture period-three: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture filament: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture BLA escape: sliced/unsliced trusted counts match 768-bit MPFR.
+Slice fixture DD depth: sliced/unsliced trusted counts match 768-bit MPFR.
+Delayed FP64/DD readback validation passed: raw classifications and work counters unchanged, 924 copies skipped.
+Delayed readback FP64/DD batch seams passed; sparse reference reuse also uses interval 8.
+Slice validation passed: FP64/DD state resume, BLA boundaries, sparse maps, batch/reference reuse, journal metadata.
+Bounded queue validation passed: FP64/DD exact images/dispatches, MPFR, barriers, readback/group bounds, native status, raw seams/reuse.
+QUIET FRAME 1/1: 13x9, 0.9ms; exact image, no log writes.
+QUIET FRAME 1/1: 13x9, 54.3ms; exact image, no log writes.
+QUIET FRAME 1/1: 13x9, 36.6ms; exact image, no log writes.
+QUIET FRAME 1/1: 13x9, 1.1ms; exact image, no log writes.
+QUIET FRAME 1/1: 13x9, 52.6ms; exact image, no log writes.
+QUIET FRAME 1/1: 13x9, 31.9ms; exact image, no log writes.
+Diagnostics-off production validation passed: exact Direct/FP64/DD images, both queue policies, no logging, timers, counters, metrics or sampling.
+Renderer fence lifetime stress passed: 20 quiet frames, handles 702->712, exact images and zero unresolved.
+Journal validation passed: 17,863 submissions, 5,363 bounded groups, durable intents and matching completions.

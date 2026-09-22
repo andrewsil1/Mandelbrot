@@ -1,0 +1,20 @@
+{
+  "frames": 10,
+  "requests": 13,
+  "obsoleteSizeFramesDiscarded": 1,
+  "olderViewFramesWithFollowup": 1,
+  "maxRepairWork": 8422274,
+  "maxRepairPixels": 185472,
+  "maxDispatchMs": 31.4945,
+  "peakSamplePrivateMiB": 652.578125,
+  "peakSampleWorkingSetMiB": 522.88671875,
+  "minHandles": 220,
+  "maxHandles": 1140,
+  "journalRecords": 90574,
+  "finalViewportMatchesLastRequest": true,
+  "adverseHealthEvents": [],
+  "exactReplayMatches": [
+    10
+  ],
+  "replayTransitionMs": 28335.1528
+}

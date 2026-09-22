@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\MandelbrotGpu.csproj" />
+    <Compile Include="..\..\third_party\ComputeSharp\src\ComputeSharp\Graphics\Commands\FenceWaitPublication.cs" Link="FenceWaitPublication.cs" />
+  </ItemGroup>
+  <Target Name="CopyNative" AfterTargets="Build">
+    <Copy SourceFiles="..\..\bin\$(Configuration)\net8.0-windows\libmpfr-4.dll;..\..\bin\$(Configuration)\net8.0-windows\libgmp-10.dll" DestinationFolder="$(OutDir)" />
+  </Target>
+</Project>

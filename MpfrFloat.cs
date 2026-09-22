@@ -90,6 +90,31 @@ public sealed class MpfrFloat : IDisposable
         return NativeMpfr.mpfr_cmp_d(Handle, value) > 0;
     }
 
+    public bool IsZero => NativeMpfr.mpfr_cmp_d(Handle, 0) == 0;
+
+    // Exact sum of IEEE-754 bit patterns, including coordinate bits omitted by
+    // the status display. Refuse values outside the finite expansion range.
+    public string[] ToExactBinary64Terms()
+    {
+        List<string> parts = [];
+        MpfrFloat remainder = Clone();
+        try
+        {
+            while (!remainder.IsZero)
+            {
+                double part = remainder.ToDouble();
+                if (!double.IsFinite(part) || part == 0 || parts.Count > 32)
+                    throw new InvalidOperationException("Coordinate cannot be exported losslessly as binary64 summands.");
+                parts.Add(BitConverter.DoubleToUInt64Bits(part).ToString("X16"));
+                MpfrFloat next = remainder.Subtract(part);
+                remainder.Dispose();
+                remainder = next;
+            }
+            return parts.ToArray();
+        }
+        finally { remainder.Dispose(); }
+    }
+
     public DoubleDouble ToDoubleDouble()
     {
         // Preserve more than one double of information for GPU code by taking

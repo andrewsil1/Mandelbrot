@@ -1,0 +1,25 @@
+Diagnostic policy passed: Debug on, Release off, explicit profiling override (GPU-free).
+GPU-free delayed-readback checks passed: interval bounds, first/periodic/final scheduling.
+GPU-free safety checks passed: reverse cleanup, cleanup failure, idempotence, dispatch brake, durable journal.
+Scaling stage configuration and numerical/dispatch stop checks passed (GPU-free).
+GPU-free timing checks passed: exclusive stages, inclusive envelopes, signed residual.
+GPU-free journal group checks passed: durable intent, bounded checkpoints, early exit, failure, abort, write failure.
+GPU-free completion timing passed: cold recording and late FIFO consumption excluded; genuine 1094ms completion still trips the unchanged brake.
+GPU-free bounded queue checks passed: capacities, FIFO, backpressure, drain, failure/tail lifetime, device-loss status.
+GPU-free BLA profiling and minimum-block policy passed.
+GPU-free suspended UI checks passed: Reset/Back/click/resize preserve the bitmap/view and submit no work.
+GPU-free fence wait checks passed: both cleanup owners, 10000 races, 2000 native waits; handles 403->403, failure code=6; patched runtime loaded.
+DD arithmetic passed: 2062 normalized/extreme pairs, square/scaling equivalence, 1449 768-bit MPFR squares.
+Repair budget passed: 1023/1024/1025/1040 tails, partial repair, hard iteration ceiling, trusted preservation.
+transition/base 1920x980: 7755.6 ms, refs=2, repaired=383, unresolved=0, passed=True
+transition/zoom-in 1920x980: 8173.4 ms, refs=2, repaired=419, unresolved=0, passed=True
+transition/pan 1920x980: 8203.6 ms, refs=2, repaired=385, unresolved=0, passed=True
+transition/resize-wide 2160x980: 8912.3 ms, refs=2, repaired=448, unresolved=0, passed=True
+transition/zoom-out 2160x980: 8215.2 ms, refs=2, repaired=418, unresolved=0, passed=True
+transition/resize-restore 1920x980: 7458.5 ms, refs=2, repaired=356, unresolved=0, passed=True
+tip/base 1920x980: 1427.0 ms, refs=2, repaired=11760, unresolved=0, passed=True
+tip/zoom-in 1920x980: 3443.3 ms, refs=34, repaired=48020, unresolved=0, passed=True
+tip/pan 1920x980: 3229.4 ms, refs=34, repaired=48020, unresolved=0, passed=True
+tip/resize-wide 2160x980: 2983.9 ms, refs=34, repaired=48020, unresolved=0, passed=True
+tip/zoom-out 2160x980: 1757.6 ms, refs=2, repaired=12740, unresolved=0, passed=True
+tip/resize-restore 1920x980: 1572.6 ms, refs=2, repaired=12740, unresolved=0, passed=True

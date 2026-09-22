@@ -1,0 +1,49 @@
+# All file types:
+#   - Treat as text
+#   - Normalize to LF line endings
+*              text=auto eol=lf
+
+# Explicit settings for well known types
+*.appxmanifest text      eol=lf
+*.cmd          text      eol=lf
+*.config       text      eol=lf
+*.cs           text      eol=lf
+*.csproj       text      eol=lf
+*.fs           text      eol=lf
+*.fsproj       text      eol=lf
+*.hlsl         text      eol=lf
+*.json         text      eol=lf
+*.manifest     text      eol=lf
+*.md           text      eol=lf
+*.msbuildproj  text      eol=lf
+*.projitems    text      eol=lf
+*.props        text      eol=lf
+*.ps1          text      eol=lf
+*.resx         text      eol=lf
+*.sh           text      eol=lf
+*.shprroj      text      eol=lf
+*.sln          text      eol=lf
+*.slnf         text      eol=lf
+*.targets      text      eol=lf
+*.xaml         text      eol=lf
+*.txt          text      eol=lf
+*.yml          text      eol=lf
+
+# T4 files need CRLF to be processed correctly. When using LF, the T4
+# generator will produce unwanted newlines in the output files. The
+# same fix for this is also present in the .editorconfig file.
+*.tt           text      eol=crlf
+*.ttinclude    text      eol=crlf
+
+# Images
+*.png          binary
+*.jpg          binary
+*.gif          binary
+
+# Keys
+*.snk          binary
+*.pfx          binary
+*.cer          binary
+
+# Other binary files
+*.dll          binary

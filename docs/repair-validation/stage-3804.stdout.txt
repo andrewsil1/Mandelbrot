@@ -1,0 +1,25 @@
+Diagnostic policy passed: Debug on, Release off, explicit profiling override (GPU-free).
+GPU-free delayed-readback checks passed: interval bounds, first/periodic/final scheduling.
+GPU-free safety checks passed: reverse cleanup, cleanup failure, idempotence, dispatch brake, durable journal.
+Scaling stage configuration and numerical/dispatch stop checks passed (GPU-free).
+GPU-free timing checks passed: exclusive stages, inclusive envelopes, signed residual.
+GPU-free journal group checks passed: durable intent, bounded checkpoints, early exit, failure, abort, write failure.
+GPU-free completion timing passed: cold recording and late FIFO consumption excluded; genuine 1094ms completion still trips the unchanged brake.
+GPU-free bounded queue checks passed: capacities, FIFO, backpressure, drain, failure/tail lifetime, device-loss status.
+GPU-free BLA profiling and minimum-block policy passed.
+GPU-free suspended UI checks passed: Reset/Back/click/resize preserve the bitmap/view and submit no work.
+GPU-free fence wait checks passed: both cleanup owners, 10000 races, 2000 native waits; handles 416->416, failure code=6; patched runtime loaded.
+DD arithmetic passed: 2062 normalized/extreme pairs, square/scaling equivalence, 1449 768-bit MPFR squares.
+Repair budget passed: 1023/1024/1025/1040 tails, partial repair, hard iteration ceiling, trusted preservation.
+transition/base 3804x1932: 28335.2 ms, refs=2, repaired=1509, unresolved=0, passed=True
+transition/zoom-in 3804x1932: 31166.4 ms, refs=2, repaired=1609, unresolved=0, passed=True
+transition/pan 3804x1932: 30490.3 ms, refs=2, repaired=1561, unresolved=0, passed=True
+transition/resize-wide 4279x1932: 33714.7 ms, refs=2, repaired=1738, unresolved=0, passed=True
+transition/zoom-out 4279x1932: 31171.1 ms, refs=2, repaired=1721, unresolved=0, passed=True
+transition/resize-restore 3804x1932: 27856.2 ms, refs=2, repaired=1499, unresolved=0, passed=True
+tip/base 3804x1932: 10015.1 ms, refs=34, repaired=46368, unresolved=0, passed=True
+tip/zoom-in 3804x1932: 12355.9 ms, refs=34, repaired=185472, unresolved=0, passed=True
+tip/pan 3804x1932: 10327.7 ms, refs=34, repaired=187404, unresolved=0, passed=True
+tip/resize-wide 4279x1932: 10987.2 ms, refs=34, repaired=187404, unresolved=0, passed=True
+tip/zoom-out 4279x1932: 8296.6 ms, refs=34, repaired=46368, unresolved=0, passed=True
+tip/resize-restore 3804x1932: 7795.4 ms, refs=34, repaired=48300, unresolved=0, passed=True

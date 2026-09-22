@@ -18,6 +18,7 @@ public sealed class DeepZoomReferenceOrbit
         RealLow = realLow;
         ImaginaryHigh = imaginaryHigh;
         ImaginaryLow = imaginaryLow;
+        Length = realHigh.Length;
     }
 
     public double[] RealHigh { get; }
@@ -27,6 +28,7 @@ public sealed class DeepZoomReferenceOrbit
     public double[] ImaginaryHigh { get; }
 
     public double[] ImaginaryLow { get; }
+    public int Length { get; private set; }
 
     public static DeepZoomReferenceOrbit Build(MpfrComplex referencePoint, int maxIterations)
     {
@@ -39,6 +41,7 @@ public sealed class DeepZoomReferenceOrbit
 
         MpfrFloat zr = MpfrFloat.FromDouble(0, PrecisionBits);
         MpfrFloat zi = MpfrFloat.FromDouble(0, PrecisionBits);
+        int length = maxIterations;
 
         try
         {
@@ -53,6 +56,13 @@ public sealed class DeepZoomReferenceOrbit
                 realLow[i] = real.Low;
                 imaginaryHigh[i] = imaginary.High;
                 imaginaryLow[i] = imaginary.Low;
+                // Stop before an escaping reference grows without bound. Its
+                // last finite value remains available to reconstruct/rebase.
+                if (real.High * real.High + imaginary.High * imaginary.High > 4.0)
+                {
+                    length = i + 1;
+                    break;
+                }
 
                 // Advance z = z^2 + c in MPFR. The temporary values are owned
                 // by this loop iteration and disposed immediately after the
@@ -80,6 +90,6 @@ public sealed class DeepZoomReferenceOrbit
             zi.Dispose();
         }
 
-        return new DeepZoomReferenceOrbit(realHigh, realLow, imaginaryHigh, imaginaryLow);
+        return new DeepZoomReferenceOrbit(realHigh, realLow, imaginaryHigh, imaginaryLow) { Length = length };
     }
 }

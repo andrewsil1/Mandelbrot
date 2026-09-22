@@ -2,7 +2,7 @@ using ComputeSharp;
 
 namespace MandelbrotGpu;
 
-[ThreadGroupSize(DefaultThreadGroupSizes.XY)]
+[ThreadGroupSize(64, 1, 1)]
 [RequiresDoublePrecisionSupport]
 [GeneratedComputeShaderDescriptor]
 public readonly partial struct MandelbrotEscapeShader(
@@ -12,6 +12,7 @@ public readonly partial struct MandelbrotEscapeShader(
     double stepX,
     double stepY,
     int width,
+    int workOffset,
     int maxIterations) : IComputeShader
 {
     // Direct FP64 mode: one GPU thread evaluates one pixel from z = 0. This is
@@ -19,13 +20,13 @@ public readonly partial struct MandelbrotEscapeShader(
     // adjacent pixel coordinates collapse into the same double value.
     public void Execute()
     {
-        int x = ThreadIds.X;
-        int y = ThreadIds.Y;
+        int index = workOffset + ThreadIds.X;
+        int x = index % width;
+        int y = index / width;
 
         // Map this GPU thread's pixel to a point in the complex plane.
-        double cr = left + x * stepX;
-        double ci = top - y * stepY;
-        int index = y * width + x;
+        double cr = left + (x + 0.5) * stepX;
+        double ci = top - (y + 0.5) * stepY;
 
         // Fast interior tests for the main cardioid and the period-2 bulb.
         // These points never escape, so skipping the full loop saves a lot of
@@ -33,7 +34,7 @@ public readonly partial struct MandelbrotEscapeShader(
         double shiftedX = cr - 0.25;
         double q = shiftedX * shiftedX + ci * ci;
 
-        if (q * (q + shiftedX) <= 0.25 * ci * ci || (cr + 1.0) * (cr + 1.0) + ci * ci <= 0.0625)
+        if (q * (q + shiftedX) < 0.25 * ci * ci - 1E-14 || (cr + 1.0) * (cr + 1.0) + ci * ci < 0.0625 - 1E-14)
         {
             iterations[index] = EscapeClassification.Interior;
             return;

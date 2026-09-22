@@ -1,0 +1,25 @@
+{
+  "productionFma": true,
+  "releaseRegression": "passed",
+  "debugRegression": "passed",
+  "releaseAssemblySha256": "78E938C428D54CFE0D92C3816464795C37AF751FD1CCA8CEB7DC2C5E6228E1E3",
+  "debugAssemblySha256": "0C31AB864ADC22D7D98BBA5E302C9198B0F09C1A0BDC6265AB8D20D9201AA90C",
+  "gpuOperandPairs": 3086,
+  "mpfrArithmeticChecks": 10240,
+  "largeSmoke": "production-smoke.jsonl",
+  "uiInitialRender": "passed",
+  "uiInteractions": "blocked",
+  "uiError": "failed to activate captured window",
+  "uiActionsVerified": [],
+  "uiWindowLeftOpen": true,
+  "releaseHandles": [
+    692,
+    692
+  ],
+  "debugHandles": [
+    702,
+    712
+  ],
+  "documentationOnlyShaderCommentsAfterBuild": true,
+  "utc": "2026-09-22T03:09:54.2065614Z"
+}

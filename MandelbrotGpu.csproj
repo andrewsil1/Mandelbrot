@@ -8,11 +8,16 @@
     <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <PlatformTarget>x64</PlatformTarget>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="tests\**\*.cs" />
+    <Compile Remove="third_party\**\*.cs" />
     <!-- ComputeSharp provides the Direct3D 12 compute shader runtime. -->
-    <PackageReference Include="ComputeSharp" Version="3.2.0" />
+    <!-- Keep the released generators/build assets, but use our patched runtime. -->
+    <PackageReference Include="ComputeSharp" Version="3.2.0" ExcludeAssets="compile;runtime" />
+    <ProjectReference Include="third_party\ComputeSharp.Runtime\ComputeSharp.Runtime.csproj" />
     <!-- The MPFR/GMP packages are used only for their native DLL payloads.
          Managed calls go through NativeMpfr.cs so the app is not tied to an
          obsolete managed wrapper API. -->

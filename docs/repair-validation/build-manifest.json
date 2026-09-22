@@ -1,0 +1,38 @@
+[
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MandelbrotRenderer.cs",
+    "Hash": "D6E1F87D8C5AA3342CE810EF8B66F0C44509283AA5A97F9AE343BDB114DE455C"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MpfrFloat.cs",
+    "Hash": "43AF0A3890287BDFB42698CB9F0FBB6EA5812587FE222970951F2ABED50E9DD2"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\RenderResult.cs",
+    "Hash": "4CCCE3E278C14E35D083EAC4EF43F2A9E46F61D5EEC410F7F175BBEC75B3A871"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\RenderTimings.cs",
+    "Hash": "35FE80AE494345591EBB6A3509FB4788BC5284B0D21A5CB50793E8452E70B8BD"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\ViewportTelemetry.cs",
+    "Hash": "2F431BDA3315222421E790D78AB330218703A97F0AAD490639E3D6BB62F4CE39"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\RepairBudgetChecks.cs",
+    "Hash": "E44921031BA1BB38F00AC054F3D27443C7C1C3315365B98C7B9A0CF4C4F98CF7"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\InteractiveChecks.cs",
+    "Hash": "D8ED3AC9B069F8D23863E7F6450322A124ACA4A0A123D9CAB9A541CA29F6D27B"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\bin\\Release\\net8.0-windows\\MandelbrotGpu.dll",
+    "Hash": "9A0CBC357DF70D22147BA237EC9350A0A63A3E12C06402E5CE80924488FD0E03"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\bin\\Release\\net8.0-windows\\RendererChecks.dll",
+    "Hash": "DB61C1C42F375FFFA2E94AA47E4D05A93EE5C9AED46415C5A3FDA648E26B7CF5"
+  }
+]

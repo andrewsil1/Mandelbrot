@@ -10,4 +10,7 @@ internal static class EscapeClassification
     // These pixels are either resolved by another reference orbit or repaired
     // with direct MPFR evaluation on the CPU.
     public const int Glitch = -2;
+
+    // Only used between GPU slices; never passed to coloring or CPU repair.
+    public const int Pending = -3;
 }

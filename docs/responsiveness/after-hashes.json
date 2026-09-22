@@ -1,0 +1,14 @@
+[
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\bin\\Release\\net8.0-windows\\MandelbrotGpu.dll",
+    "Hash": "35C22B6D107FB82BCCCCC886B45219CAF9832EEF9F1B3AC5B3EC128CAF8DFA16"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\bin\\Release\\net8.0-windows\\MandelbrotGpu.dll",
+    "Hash": "35C22B6D107FB82BCCCCC886B45219CAF9832EEF9F1B3AC5B3EC128CAF8DFA16"
+  },
+  {
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MandelbrotRenderer.cs",
+    "Hash": "CCC94BDAD8619F2B9F6925A9DF1B7F4114A0DECBEB289A8D0468CF30DD10814E"
+  }
+]

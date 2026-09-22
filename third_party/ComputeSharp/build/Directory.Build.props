@@ -1,0 +1,207 @@
+<Project>
+  <PropertyGroup>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!--
+      Show full details for all trim/AOT warnings produced during builds.
+      Normally, the linker would only show a generic warning per assembly.
+    -->
+    <TrimmerSingleWarn>false</TrimmerSingleWarn>
+
+    <!--
+      Enable the latest warning wave, which shows additional warnings for invalid language features that are disabled by default.
+      For additional info, see https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/compiler-messages/warning-waves.
+    -->
+    <AnalysisLevel>latest</AnalysisLevel>
+
+    <!-- Import the global configs from the CodeStyle package (enables all IDExxxx warnings)-->
+    <AnalysisLevelStyle>latest-all</AnalysisLevelStyle>
+
+    <!-- Enforce all code style rules during build (this replaces referencing Microsoft.CodeAnalysis.CSharp.CodeStyle) -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!--
+      Enable the compiler strict mode (see https://www.meziantou.net/csharp-compiler-strict-mode.htm).
+      This (poorly documented) mode enables additional warnings for incorrect usages of some features.
+      For instance, this will warn when using the == operator to compare a struct with a null literal.
+    -->
+    <Features>strict</Features>
+
+    <!--
+      Opt-in feature that allows skipping unnecessary MSBuild invocations during incremental builds.
+      See https://devblogs.microsoft.com/visualstudio/vs-toolbox-accelerate-your-builds-of-sdk-style-net-projects/.
+    -->
+    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+  </PropertyGroup>
+
+  <PropertyGroup>
+
+    <!--
+      This ignores the following warning:
+      "MSB3270: There was a mismatch between the processor architecture of the project being built "MSIL" and the
+      processor architecture of the reference". It pops up because all samples are only targeting x64/Arm64.
+    -->
+    <NoWarn>$(NoWarn);MSB3270</NoWarn>
+
+    <!--
+      This ignores the following warning:
+      "CA1060: Move P/Invokes to NativeMethods class". The whole repository is full of P/Invoke-s everywhere.
+      See: https://learn.microsoft.com/dotnet/fundamentals/code-analysis/quality-rules/ca1060.
+    -->
+    <NoWarn>$(NoWarn);CA1060</NoWarn>
+
+    <!--
+      Suppress ref safety warnings in unsafe contexts (see https://github.com/dotnet/csharplang/issues/6476).
+      This is used eg. to replace Unsafe.SizeOf<T>() calls with just sizeof(T). The warning is not necessary
+      since in order to use these APIs the caller already has to be in an unsafe context.
+    -->
+    <NoWarn>$(NoWarn);CS8500</NoWarn>
+  </PropertyGroup>
+
+  <!-- Centralized location for all generated artifacts -->
+  <PropertyGroup>
+    <PackageOutputPath>$(MSBuildThisFileDirectory)..\artifacts\</PackageOutputPath>
+  </PropertyGroup>
+
+  <!--
+    The target version being built (this is referenced by all build steps).
+    This version will set the package version prefix and the assembly version.
+    As such, this needs to be changed before a new release as well.
+  -->
+  <PropertyGroup>
+    <ComputeSharpPackageVersion>3.2.0</ComputeSharpPackageVersion>
+    <IsCommitOnReleaseBranch>false</IsCommitOnReleaseBranch>
+  </PropertyGroup>
+
+  <!--
+    Check if the current push is for a release build for NuGet, as that will create a package with a hardcoded version.
+    A release build is one that originates from a push to a branch with the format 'rel/<BUILD_VERSION>(.<SUFFIX>)?'.
+  -->
+  <PropertyGroup>
+    <ReleaseVersionParsingRegex>^rel/(\d{1,4}\.\d{1,4}\.\d{1,4})(?:-(\w+(?:\.\w+)?))?$</ReleaseVersionParsingRegex>
+    <IsBranchNameStartingWithRefPrefix>$([System.Text.RegularExpressions.Regex]::IsMatch($(GITHUB_REF_NAME), $(ReleaseVersionParsingRegex)))</IsBranchNameStartingWithRefPrefix>
+  </PropertyGroup>
+
+  <!-- If the current branch and action match a release for NuGet, override the relative build properties -->
+  <PropertyGroup Condition="'$(GITHUB_EVENT_NAME)' == 'push' AND '$(GITHUB_REF_NAME)' != '' AND '$(IsBranchNameStartingWithRefPrefix)' == 'true'">
+    <IsCommitOnReleaseBranch>true</IsCommitOnReleaseBranch>
+    <ComputeSharpPackageVersionFromReleaseBranch>$([System.Text.RegularExpressions.Regex]::Match($(GITHUB_REF_NAME), $(ReleaseVersionParsingRegex)).Groups[1].Value)</ComputeSharpPackageVersionFromReleaseBranch>
+    <ComputeSharpPackageVersionSuffixFromReleaseBranch>$([System.Text.RegularExpressions.Regex]::Match($(GITHUB_REF_NAME), $(ReleaseVersionParsingRegex)).Groups[2].Value)</ComputeSharpPackageVersionSuffixFromReleaseBranch>
+    <ComputeSharpPackageVersion>$(ComputeSharpPackageVersionFromReleaseBranch)</ComputeSharpPackageVersion>
+    <VersionSuffix>$(ComputeSharpPackageVersionSuffixFromReleaseBranch)</VersionSuffix>
+  </PropertyGroup>
+
+  <!-- Configure the assembly version and suffix for both normal CI builds and release builds -->
+  <PropertyGroup>
+    <AssemblyVersion>$(ComputeSharpPackageVersion).0</AssemblyVersion>
+    <VersionPrefix>$(ComputeSharpPackageVersion)</VersionPrefix>
+    <VersionSuffix Condition="'$(EXCLUDE_SUFFIX_FROM_VERSION)' != 'true' AND '$(IsCommitOnReleaseBranch)' != 'true'">alpha</VersionSuffix>
+    <VersionSuffix Condition="'$(GITHUB_EVENT_NAME)' == 'pull_request' AND '$(IsCommitOnReleaseBranch)' != 'true'">pr</VersionSuffix>
+  </PropertyGroup>
+
+  <!-- Source link and debug configuration -->
+  <PropertyGroup>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <!-- NuGet info and basic configuration -->
+  <PropertyGroup>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_RUN_ID)' != ''">true</ContinuousIntegrationBuild>
+    <PackageId>$(MSBuildProjectName)</PackageId>
+    <Title>$(MSBuildProjectName)</Title>
+    <RepositoryUrl>https://github.com/Sergio0694/ComputeSharp/</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <ProjectUrl>https://github.com/Sergio0694/ComputeSharp/</ProjectUrl>
+    <RepositoryBranch Condition="$(GITHUB_REF.Contains('refs/heads/'))">$(GITHUB_REF.Replace('refs/heads/', ''))</RepositoryBranch>
+    <RepositoryBranch Condition="$(GITHUB_REF.Contains('refs/pull/'))">pr$(GITHUB_REF.Replace('refs/pull/', '').Replace('/merge', ''))</RepositoryBranch>
+    <Authors>Sergio Pedri</Authors>
+    <Owners>Sergio Pedri</Owners>
+    <Company>Sergio Pedri</Company>
+    <Copyright>Copyright (c) 2024 Sergio Pedri</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageProjectUrl>https://github.com/Sergio0694/ComputeSharp/</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIconUrl>https://user-images.githubusercontent.com/10199417/110238403-b8811080-7f41-11eb-8cfe-e47e7e58f05b.png</PackageIconUrl>
+    <PackageTags>dotnet net netcore netstandard csharp library graphics directx shader hlsl compute gpu performance parallel windows</PackageTags>
+
+    <!--
+      Generate documentation files. In theory this should only be abled for published, non source generator projects.
+      However, this is always enabled to work around https://github.com/dotnet/roslyn/issues/41640. Until that's fixed,
+      source generators will also produce an .xml file with their documentation. Note that this doesn't really impact
+      NuGet packages, since the analyzer binaries are packed manually after build, so the .xml files aren't included.
+      When this workaround is no longer needed, the same property should also removed for the \samples directory.
+      Once that issue is fixed, this should be moved down to the src\ specific .props file again, and otherwise disabled.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!-- Needed for deterministic builds -->
+  <ItemGroup>
+    <SourceRoot Include="$(MSBuildThisFileDirectory)..\"/>
+  </ItemGroup>
+
+  <!--
+    Setup properties to filter properties based on their location and name. These are needed to decide when to
+    enable assembly strong name signing. We only want to enable it for published projects and for internal test
+    projects (as InternalsVisibleTo also needs a strong name if the source assembly has a strong name). But, we
+    don't want to enable it for all projects, as some test and sample projects have NuGet dependencies to packages
+    which are not strongly named, and as such would not compile.
+  -->
+  <PropertyGroup>
+    <ProjectDirectoryPathFromSourceRoot>$([MSBuild]::MakeRelative('$(MSBuildThisFileDirectory)..\', $(MSBuildProjectDirectory)))</ProjectDirectoryPathFromSourceRoot>
+    <IsPublishedProject>$(ProjectDirectoryPathFromSourceRoot.StartsWith('src\'))</IsPublishedProject>
+    <IsSourceGeneratorProject>false</IsSourceGeneratorProject>
+    <IsSourceGeneratorProject Condition="$(IsPublishedProject) AND $(MSBuildProjectName.EndsWith('.SourceGenerators'))">true</IsSourceGeneratorProject>
+    <IsCodeFixersProject>false</IsCodeFixersProject>
+    <IsCodeFixersProject Condition="$(IsPublishedProject) AND $(MSBuildProjectName.EndsWith('.CodeFixers'))">true</IsCodeFixersProject>
+    <IsAnalyzersProject>false</IsAnalyzersProject>
+    <IsAnalyzersProject Condition="$(IsSourceGeneratorProject) OR $(IsCodeFixersProject)">true</IsAnalyzersProject>
+    <IsPackagedProject>false</IsPackagedProject>
+    <IsPackagedProject Condition="$(IsPublishedProject) AND !$(IsAnalyzersProject)">true</IsPackagedProject>
+    <IsTestProject>$(ProjectDirectoryPathFromSourceRoot.StartsWith('tests\'))</IsTestProject>    
+    <IsInternalsTestProject>false</IsInternalsTestProject>
+    <IsInternalsTestProject Condition="$(IsTestProject) AND $(MSBuildProjectName.EndsWith('.Internals'))">true</IsInternalsTestProject>
+  </PropertyGroup>
+
+  <!-- Enable strong name signing when needed (see notes above) -->
+  <PropertyGroup Condition="$(IsPublishedProject) OR $(IsInternalsTestProject)">
+    <SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)..\build\computesharp.snk</AssemblyOriginatorKeyFile>
+    <AssemblySignPublicKey>00240000048000009400000006020000002400005253413100040000010001001DA244ACFEE0D02ADF2D7F464B5E2562BB1AEF50B32DCD8B2DADEC659A5ED8B6C5817B03EB5E723067718A7972C936F626879DCE8E85636E7812B92CAB100D4947E3E6655AD49359E279A09F34B65E5ECA5FD5D8941C70BD48E56D8739A3BFF4F1C85071B7494D0B3A692F16CA6CC40585BCA8AD5B24BB2E7B834F15B6E667BB</AssemblySignPublicKey>
+  </PropertyGroup>
+
+  <!--
+    We need PolySharp for all .NET Standard 2.0 polyfills. We do not want to use polyfills in published projects,
+    as those should just adhere to the available APIs in each LTS release of .NET, so we only enable this reference
+    for projects which are not published (ie. tests and samples), or just for the source generator projects. We are
+    intentionally not adding PolySharp to code fixers, as they always reference source generators projects, and they
+    have 'InternalsVisibleTo' on those projects, as they need that to access analyzer ids and property names.
+  -->
+  <PropertyGroup>
+    <IsPolySharpPackageReferenceNeeded>false</IsPolySharpPackageReferenceNeeded>
+    <IsPolySharpPackageReferenceNeeded Condition="'$(IsPublishedProject)' == 'false' OR '$(IsSourceGeneratorProject)' == 'true'">true</IsPolySharpPackageReferenceNeeded>
+  </PropertyGroup>
+
+  <!-- Add the package reference, if needed -->
+  <ItemGroup Condition="'$(IsPolySharpPackageReferenceNeeded)' == 'true'">
+    <PackageReference Include="PolySharp" Version="1.15.0" PrivateAssets="all" IsImplicitlyDefined="true" />
+  </ItemGroup>
+
+  <!-- Define the type alias for [UnmanagedCallersOnly] when on the .NET Standard 2.0 target -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <Using Include="System.Runtime.InteropServices2.UnmanagedCallersOnlyAttribute" Alias="UnmanagedCallersOnlyAttribute" />
+  </ItemGroup>
+
+  <!-- Configure PolySharp options -->
+  <PropertyGroup>
+    <PolySharpIncludeRuntimeSupportedAttributes>true</PolySharpIncludeRuntimeSupportedAttributes>
+    <PolySharpUseInteropServices2NamespaceForUnmanagedCallersOnlyAttribute>true</PolySharpUseInteropServices2NamespaceForUnmanagedCallersOnlyAttribute>
+  </PropertyGroup>
+</Project>

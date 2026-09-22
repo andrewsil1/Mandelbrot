@@ -1,0 +1,224 @@
+[
+  {
+    "revision": "after",
+    "width": 1024,
+    "height": 520,
+    "fixture": "tip",
+    "quietMs": [
+      294.9372,
+      290.6823,
+      260.388
+    ],
+    "medianMs": 290.6823,
+    "hash": "97207061869F1F7936D31BE18EEF5421BB86CC64760518B69422EDE506087720",
+    "refs": 34,
+    "repaired": 13520,
+    "fallback": 532480,
+    "repairWork": 349066,
+    "instrumentedOtherHostMs": 32.746200000000044,
+    "medianReductionPercent": 33.831339540560755
+  },
+  {
+    "revision": "after",
+    "width": 1024,
+    "height": 520,
+    "fixture": "transition",
+    "quietMs": [
+      1567.8798,
+      1580.3161,
+      1594.0445
+    ],
+    "medianMs": 1580.3161,
+    "hash": "7255A1A1A049C95B8A8EDC1D85275234DB450C33C7C6E412D41CF6A7F766C9D4",
+    "refs": 2,
+    "repaired": 122,
+    "fallback": 33465,
+    "repairWork": 687156,
+    "instrumentedOtherHostMs": 17.849899999999252,
+    "medianReductionPercent": 1.128999845842138
+  },
+  {
+    "revision": "after",
+    "width": 1920,
+    "height": 980,
+    "fixture": "tip",
+    "quietMs": [
+      596.9006,
+      485.3383,
+      474.3719
+    ],
+    "medianMs": 485.3383,
+    "hash": "872F0839BD86C7F743403C1C45E1F3425B3CAA0458FA50C456724BC928A6F344",
+    "refs": 34,
+    "repaired": 48020,
+    "fallback": 1881600,
+    "repairWork": 1263178,
+    "instrumentedOtherHostMs": 66.98830000000044,
+    "medianReductionPercent": 14.370097355968559
+  },
+  {
+    "revision": "after",
+    "width": 1920,
+    "height": 980,
+    "fixture": "transition",
+    "quietMs": [
+      5006.6153,
+      5019.3666,
+      5038.3661
+    ],
+    "medianMs": 5019.3666,
+    "hash": "F1D800C28581A1A37AD9D67864BB2A295989FED91062CB90BBF1421F160AB3D3",
+    "refs": 2,
+    "repaired": 383,
+    "fallback": 117486,
+    "repairWork": 2123170,
+    "instrumentedOtherHostMs": 39.39549999999872,
+    "medianReductionPercent": -0.8541921065125857
+  },
+  {
+    "revision": "after",
+    "width": 3804,
+    "height": 1932,
+    "fixture": "tip",
+    "quietMs": [
+      1637.3595,
+      1542.3322,
+      1511.8834
+    ],
+    "medianMs": 1542.3322,
+    "hash": "E480CABAFA64839204E42525DC9767CCD30BDF67FE927E07E6F47B2BE20D3E9B",
+    "refs": 34,
+    "repaired": 185472,
+    "fallback": 7349328,
+    "repairWork": 4786969,
+    "instrumentedOtherHostMs": 192.4064000000053,
+    "medianReductionPercent": 21.271651439007066
+  },
+  {
+    "revision": "after",
+    "width": 3804,
+    "height": 1932,
+    "fixture": "transition",
+    "quietMs": [
+      19260.8304,
+      19084.2197,
+      19134.1322
+    ],
+    "medianMs": 19134.1322,
+    "hash": "0E6BA83F3A6958E3ABAD8D67B9EC91D053E51091DCC3715CCBF8436E4C557735",
+    "refs": 2,
+    "repaired": 1509,
+    "fallback": 456582,
+    "repairWork": 8422274,
+    "instrumentedOtherHostMs": 142.56140000001324,
+    "medianReductionPercent": 0.13035784610343493
+  },
+  {
+    "revision": "before",
+    "width": 1024,
+    "height": 520,
+    "fixture": "tip",
+    "quietMs": [
+      505.1239,
+      439.3051,
+      255.6712
+    ],
+    "medianMs": 439.3051,
+    "hash": "97207061869F1F7936D31BE18EEF5421BB86CC64760518B69422EDE506087720",
+    "refs": 34,
+    "repaired": 13520,
+    "fallback": 532480,
+    "repairWork": 349066,
+    "instrumentedOtherHostMs": 119.3553000000004
+  },
+  {
+    "revision": "before",
+    "width": 1024,
+    "height": 520,
+    "fixture": "transition",
+    "quietMs": [
+      1583.3635,
+      1604.4864,
+      1598.3616
+    ],
+    "medianMs": 1598.3616,
+    "hash": "7255A1A1A049C95B8A8EDC1D85275234DB450C33C7C6E412D41CF6A7F766C9D4",
+    "refs": 2,
+    "repaired": 122,
+    "fallback": 33465,
+    "repairWork": 687156,
+    "instrumentedOtherHostMs": 16.332100000000082
+  },
+  {
+    "revision": "before",
+    "width": 1920,
+    "height": 980,
+    "fixture": "tip",
+    "quietMs": [
+      1709.1683,
+      566.786,
+      557.2251
+    ],
+    "medianMs": 566.786,
+    "hash": "872F0839BD86C7F743403C1C45E1F3425B3CAA0458FA50C456724BC928A6F344",
+    "refs": 34,
+    "repaired": 48020,
+    "fallback": 1881600,
+    "repairWork": 1263178,
+    "instrumentedOtherHostMs": 434.18799999999965
+  },
+  {
+    "revision": "before",
+    "width": 1920,
+    "height": 980,
+    "fixture": "transition",
+    "quietMs": [
+      4969.0458,
+      4976.8547,
+      5029.2694
+    ],
+    "medianMs": 4976.8547,
+    "hash": "F1D800C28581A1A37AD9D67864BB2A295989FED91062CB90BBF1421F160AB3D3",
+    "refs": 2,
+    "repaired": 383,
+    "fallback": 117486,
+    "repairWork": 2123170,
+    "instrumentedOtherHostMs": 32.175600000001396
+  },
+  {
+    "revision": "before",
+    "width": 3804,
+    "height": 1932,
+    "fixture": "tip",
+    "quietMs": [
+      6093.1748,
+      1959.0557,
+      1852.87
+    ],
+    "medianMs": 1959.0557,
+    "hash": "E480CABAFA64839204E42525DC9767CCD30BDF67FE927E07E6F47B2BE20D3E9B",
+    "refs": 34,
+    "repaired": 185472,
+    "fallback": 7349328,
+    "repairWork": 4786969,
+    "instrumentedOtherHostMs": 1739.0368999999955
+  },
+  {
+    "revision": "before",
+    "width": 3804,
+    "height": 1932,
+    "fixture": "transition",
+    "quietMs": [
+      19159.1076,
+      19110.6893,
+      19172.183
+    ],
+    "medianMs": 19159.1076,
+    "hash": "0E6BA83F3A6958E3ABAD8D67B9EC91D053E51091DCC3715CCBF8436E4C557735",
+    "refs": 2,
+    "repaired": 1509,
+    "fallback": 456582,
+    "repairWork": 8422274,
+    "instrumentedOtherHostMs": 118.26899999996749
+  }
+]

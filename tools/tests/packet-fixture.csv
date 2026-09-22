@@ -1,0 +1,10 @@
+Ignored diagnostic line with an "unmatched quote
+Microsoft-Windows-DxgKrnl/Context/win:Start,1000,RendererChecks.exe (42),1,0,,,,,"hContext : context-a","NodeOrdinal : 0"
+Microsoft-Windows-DxgKrnl/HwQueue/win:Start,1001,RendererChecks.exe (42),1,0,,,,,"hContext : context-a","ParentDxgHwQueue : queue-a"
+Microsoft-Windows-DxgKrnl/DmaPacket/win:Info,2000,System (4),1,0,,,,,"hHwQueue : queue-a","ProgressFenceValue : 1","pDmaBuffer : buffer","ntStatus : 0"
+Microsoft-Windows-DxgKrnl/DmaPacket/win:Info,2001,System (4),1,0,,,,,"hHwQueue : queue-a","ProgressFenceValue : 1","pDmaBuffer : buffer","ntStatus : 0"
+Microsoft-Windows-DxgKrnl/DmaPacket/win:Info,4000,Idle (0),1,0,,,,,"hHwQueue : queue-a","ProgressFenceValue : 1"
+Microsoft-Windows-DxgKrnl/DmaPacket/win:Info,5000,System (4),1,0,,,,,"hHwQueue : queue-a","ProgressFenceValue : 2","pDmaBuffer : buffer","ntStatus : 1"
+Microsoft-Windows-DxgKrnl/DmaPacket/win:Info,6000,Idle (0),1,0,,,,,"hHwQueue : queue-a","ProgressFenceValue : 3"
+Microsoft-Windows-DxgKrnl/DmaPacket/win:Info,7000,System (4),1,0,,,,,"hHwQueue : queue-a","ProgressFenceValue : 4","pDmaBuffer : buffer","ntStatus : 0"
+Microsoft-Windows-DxgKrnl/DmaPacket/win:Info,8000,System (4),1,0,,,,,"hHwQueue : other-queue","ProgressFenceValue : 1","pDmaBuffer : buffer","ntStatus : 0"

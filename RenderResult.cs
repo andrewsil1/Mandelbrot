@@ -9,4 +9,10 @@ public sealed record RenderResult(
     int RepairedCount,
     int UnresolvedGlitchCount,
     int ReferencePasses,
-    int FinalRepairLimit);
+    int FinalRepairLimit,
+    RenderTimings Timings,
+    RenderValidation? Validation)
+{
+    public int Float64GlitchCount { get; init; }
+    public bool UsedDoubleDoubleFallback { get; init; }
+}

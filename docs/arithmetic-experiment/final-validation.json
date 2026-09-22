@@ -1,0 +1,10 @@
+{
+  "applicationSha256": "867778B92AC4182205F6AC575DC80D465CD551900AD87E12DF909681EAE2E873",
+  "testApplicationSha256": "867778B92AC4182205F6AC575DC80D465CD551900AD87E12DF909681EAE2E873",
+  "matchesMeasuredFp32Binary": true,
+  "releaseRegression": "passed",
+  "submissions": 17863,
+  "journalGroups": 5363,
+  "regressionLog": "fp32-final-regression-release.log",
+  "viewportInputSha256": "28E1528A5B47795BA253CC7238ECE531F8709CE8C618801D7968893ED4971C0C"
+}

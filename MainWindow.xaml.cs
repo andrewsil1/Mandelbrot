@@ -27,6 +27,7 @@ public partial class MainWindow : Window
     private int imageWidth = InitialImageWidth;
     private int imageHeight = InitialImageHeight;
     private bool isRendering;
+    private bool gpuRenderingSuspended;
 
     // A resize or click can arrive while the GPU is still busy. Coalesce those
     // changes into one follow-up render instead of starting overlapping jobs.
@@ -35,6 +36,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ConfigureUiValidation();
 
         // Resize can fire dozens of times during a corner drag. Debouncing
         // keeps the app responsive and renders only the final settled size.
@@ -47,12 +49,17 @@ public partial class MainWindow : Window
         Loaded += async (_, _) =>
         {
             EnsureRenderTarget(resetView: true);
+            ApplyValidationFixture();
             await RenderAsync();
         };
     }
 
     private async Task RenderAsync()
     {
+        // A fresh application session is required after a GPU safety failure.
+        // Do not let a queued resize/click silently recreate and stress the device.
+        if (gpuRenderingSuspended) return;
+        LogUiValidation("request", view, imageWidth, imageHeight);
         if (isRendering)
         {
             // Do not overlap render jobs. ComputeSharp work plus readback can
@@ -75,6 +82,7 @@ public partial class MainWindow : Window
         int renderHeight = imageHeight;
         MandelbrotViewport renderView = view;
         WriteableBitmap renderBitmap = bitmap;
+        LogUiValidation("render-start", renderView, renderWidth, renderHeight);
 
         try
         {
@@ -114,10 +122,31 @@ public partial class MainWindow : Window
                 ? $"  repair cap={result.FinalRepairLimit:n0}"
                 : string.Empty;
             StatusText.Text = $"{renderWidth}x{renderHeight}  {result.Mode}  refs={result.ReferencePasses:n0}  {maxIterations:n0} iter  repaired={result.RepairedCount:n0}  unresolved={result.UnresolvedGlitchCount:n0}/{result.InitialGlitchCount:n0}{repairCapText}  {stopwatch.ElapsedMilliseconds:n0} ms";
+            // Keep detailed measurements accessible without crowding the bar.
+            StatusText.ToolTip = RendererDiagnostics.Enabled ? result.Timings.ToString() : null;
+            if (result.Validation is { } validation)
+            {
+                StatusText.Text += $"  check={validation.Mismatches}/{validation.Samples - validation.Unresolved} mismatches";
+                StatusText.ToolTip += $"; validation unresolved: {validation.Unresolved}";
+            }
             BackButton.IsEnabled = history.Count > 0;
+            LogUiValidation("render-complete", renderView, renderWidth, renderHeight,
+                new { applied = ReferenceEquals(renderBitmap, bitmap), latestView = ReferenceEquals(renderView, view),
+                    queued = renderQueued, elapsedMs = stopwatch.Elapsed.TotalMilliseconds, status = StatusText.Text });
+        }
+        catch (GpuRenderSuspendedException ex)
+        {
+            LogUiValidation("suspended", renderView, renderWidth, renderHeight, ex.Message);
+            gpuRenderingSuspended = true;
+            renderQueued = false;
+            resizeTimer.Stop();
+            ResetButton.IsEnabled = false;
+            BackButton.IsEnabled = false;
+            StatusText.Text = ex.Message;
         }
         catch (Exception ex)
         {
+            LogUiValidation("error", renderView, renderWidth, renderHeight, ex.ToString());
             StatusText.Text = ex.Message;
         }
         finally
@@ -135,6 +164,7 @@ public partial class MainWindow : Window
 
     private async void FractalImage_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (gpuRenderingSuspended) return;
         if (!TryGetComplexPoint(e.GetPosition(FractalImage), out MpfrComplex? center) || center is null)
         {
             return;
@@ -157,6 +187,7 @@ public partial class MainWindow : Window
 
     private async void FractalImage_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (gpuRenderingSuspended) return;
         if (!TryGetComplexPoint(e.GetPosition(FractalImage), out MpfrComplex? center) || center is null)
         {
             return;
@@ -177,6 +208,7 @@ public partial class MainWindow : Window
 
     private async void ResetButton_Click(object sender, RoutedEventArgs e)
     {
+        if (gpuRenderingSuspended) return;
         history.Clear();
         EnsureRenderTarget(resetView: true);
         await RenderAsync();
@@ -184,6 +216,7 @@ public partial class MainWindow : Window
 
     private async void BackButton_Click(object sender, RoutedEventArgs e)
     {
+        if (gpuRenderingSuspended) return;
         if (history.TryPop(out MandelbrotViewport? previous))
         {
             // The saved view may have been captured at a different window
@@ -195,7 +228,7 @@ public partial class MainWindow : Window
 
     private void RenderHost_SizeChanged(object sender, SizeChangedEventArgs e)
     {
-        if (!IsLoaded)
+        if (!IsLoaded || gpuRenderingSuspended)
         {
             return;
         }
@@ -209,6 +242,8 @@ public partial class MainWindow : Window
     private async void ResizeTimer_Tick(object? sender, EventArgs e)
     {
         resizeTimer.Stop();
+
+        if (gpuRenderingSuspended) return;
 
         if (EnsureRenderTarget(resetView: false))
         {

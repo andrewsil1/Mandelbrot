@@ -1,0 +1,14 @@
+{
+  "configuration": "Release",
+  "regression": "passed",
+  "regressionLog": "fma-regression-release.log",
+  "submissions": 17863,
+  "groups": 5364,
+  "applicationSha256": "5F9EFEEEC9C1960F0958023F757BF541F2590771F19D83F208D5FBCD70A35DAE",
+  "testApplicationSha256": "5F9EFEEEC9C1960F0958023F757BF541F2590771F19D83F208D5FBCD70A35DAE",
+  "measuredHlslSha256": "17341EEF37EC8C6733DF076A6F24E0A2BE78DD67065D14D7FAF4153AACB27AD7",
+  "productionFmaEnabled": false,
+  "candidateValidation": "Focused GPU arithmetic and raw MPFR checks; complete image comparisons at 256 and 512 only",
+  "codeDifferenceSinceTiming": "Host dispatch indentation only",
+  "utc": "2026-09-21T22:09:27.5472452Z"
+}

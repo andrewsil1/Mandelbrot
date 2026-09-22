@@ -7,15 +7,12 @@ internal static class MpfrMandelbrot
     // orbit became numerically invalid.
     private const uint PrecisionBits = 384;
 
-    public static int EscapeIterations(MpfrComplex c, int maxIterations)
+    public static int EscapeIterations(MpfrComplex c, int maxIterations, uint precisionBits = PrecisionBits)
     {
-        if (IsDefinitelyInsideKnownBulbs(c))
-        {
-            return EscapeClassification.Interior;
-        }
-
-        MpfrFloat zr = MpfrFloat.FromDouble(0, PrecisionBits);
-        MpfrFloat zi = MpfrFloat.FromDouble(0, PrecisionBits);
+        // Do not round c to double for an interior shortcut: repaired pixels
+        // can sit arbitrarily close to a cardioid or bulb boundary.
+        MpfrFloat zr = MpfrFloat.FromDouble(0, precisionBits);
+        MpfrFloat zi = MpfrFloat.FromDouble(0, precisionBits);
 
         try
         {
@@ -52,17 +49,4 @@ internal static class MpfrMandelbrot
         return EscapeClassification.Interior;
     }
 
-    private static bool IsDefinitelyInsideKnownBulbs(MpfrComplex c)
-    {
-        // This quick rejection is evaluated in double precision. It is used
-        // only for the well-known large cardioid/bulb interiors where the test
-        // is far from the tiny deep-zoom deltas repaired here.
-        double cr = c.Real.ToDouble();
-        double ci = c.Imaginary.ToDouble();
-        double shiftedX = cr - 0.25;
-        double q = shiftedX * shiftedX + ci * ci;
-
-        return q * (q + shiftedX) <= 0.25 * ci * ci ||
-               (cr + 1.0) * (cr + 1.0) + ci * ci <= 0.0625;
-    }
 }

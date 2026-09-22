@@ -1,0 +1,96 @@
+<Project>
+  <Import Project="..\build\Directory.Build.props" />
+
+  <!-- Centralized packaging metadata for published projects -->
+  <PropertyGroup Condition="$(IsPackagedProject)">
+
+    <!-- Package descriptions-->
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp'">
+<![CDATA[A library to run C# code in parallel on the GPU through DX12 and dynamically generated HLSL compute shaders.]]>
+    </Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp.Core'">
+<![CDATA[A library containing basic primitives to support ComputeSharp (this package is not supposed to be referenced directly by developers).]]>
+    </Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp.D2D1'">
+<![CDATA[A library to write D2D1 pixel shaders entirely with C# code, and to easily register and create ID2D1Effect-s from them.]]>
+    </Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp.D2D1.Uwp'">
+<![CDATA[A UWP library with APIs to leverage D2D1 functionality with D2D1 pixel shaders powered by ComputeSharp.D2D1.]]>
+    </Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp.D2D1.WinUI'">
+<![CDATA[A WinUI 3 library with APIs to leverage D2D1 functionality with D2D1 pixel shaders powered by ComputeSharp.D2D1.]]>
+    </Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp.D3D12MemoryAllocator'">
+<![CDATA[An extension library for ComputeSharp to enable using D3D12MA as the memory allocator for graphics resources.]]>
+    </Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp.Dxc'">
+<![CDATA[An extension library for ComputeSharp bundling the DXC compiler and enabling shader reflection.]]>
+    </Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp.Pix'">
+<![CDATA[An extension library for ComputeSharp to enable PIX support to produce debugging information.]]>
+    </Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp.Uwp'">
+<![CDATA[A UWP library with controls to render DX12 shaders powered by ComputeSharp.]]>
+    </Description>
+    <Description Condition="'$(MSBuildProjectName)' == 'ComputeSharp.WinUI'">
+<![CDATA[A WinUI 3 library with controls to render DX12 shaders powered by ComputeSharp.]]>
+    </Description>
+
+    <!-- Package tags -->
+    <PackageTags Condition="$(MSBuildProjectName.Contains('.D2D1'))">$(PackageTags) d2d d2d1 direct2d pixel</PackageTags>
+    <PackageTags Condition="$(MSBuildProjectName.EndsWith('.Uwp'))">$(PackageTags) uwp xaml winui winui2</PackageTags>
+    <PackageTags Condition="$(MSBuildProjectName.EndsWith('.WinUI'))">$(PackageTags) xaml winui winui3 winappsdk</PackageTags>
+  </PropertyGroup>
+
+  <!-- Additional properties for all source projects-->
+  <PropertyGroup>
+
+    <!-- Define SOURCE_GENERATOR as well for source generators -->
+    <DefineConstants Condition="$(IsSourceGeneratorProject)">$(DefineConstants);SOURCE_GENERATOR</DefineConstants>
+
+    <!-- Disable packing symbols for all analyzers -->
+    <PackSymbols Condition="$(IsAnalyzersProject)">false</PackSymbols>
+
+    <!-- Enable extended analyzer rules for all analyzers -->
+    <EnforceExtendedAnalyzerRules Condition="$(IsAnalyzersProject)">true</EnforceExtendedAnalyzerRules>
+
+    <!-- Check whether the project has a .targets file to bundle -->
+    <IsTargetsFileAvailableForPacking>false</IsTargetsFileAvailableForPacking>
+    <IsTargetsFileAvailableForPacking Condition="$(IsPackagedProject) AND Exists('$(MSBuildProjectName).targets')">true</IsTargetsFileAvailableForPacking>
+
+    <!-- Same check for an optional README.md file to bundle -->
+    <IsReadMeFileAvailableForPacking>false</IsReadMeFileAvailableForPacking>
+    <IsReadMeFileAvailableForPacking Condition="$(IsPackagedProject) AND Exists('README.md')">true</IsReadMeFileAvailableForPacking>
+
+    <!-- Same check for an optional LICENSE.txt file to bundle -->
+    <IsLicenseFileAvailableForPacking>false</IsLicenseFileAvailableForPacking>
+    <IsLicenseFileAvailableForPacking Condition="$(IsPackagedProject) AND Exists('LICENSE.txt')">true</IsLicenseFileAvailableForPacking>
+  </PropertyGroup>
+
+  <!-- Additional items for published projects -->
+  <ItemGroup Condition="$(IsPackagedProject)" Label="Package">
+
+    <!-- Pack the NuGet icon file -->
+    <None Include="$(MSBuildThisFileDirectory)..\assets\icon.png" Pack="true" PackagePath="\" Visible="False" />
+
+    <!-- Pack .targets files, if present -->
+    <None Condition="$(IsTargetsFileAvailableForPacking)" Include="$(MSBuildProjectName).targets" PackagePath="buildTransitive" Pack="true" />
+    <None Condition="$(IsTargetsFileAvailableForPacking)" Include="$(MSBuildProjectName).targets" PackagePath="build" Pack="true" />
+
+    <!-- Pack the README file, if present -->
+    <None Condition="$(IsReadMeFileAvailableForPacking)" Include="README.md" Pack="true" PackagePath="\" Visible="False" />
+
+    <!-- Pack the license file, if present -->
+    <None Condition="$(IsLicenseFileAvailableForPacking)" Include="LICENSE.txt" Pack="true" PackagePath="\" Visible="False" />
+  </ItemGroup>
+
+  <!--
+    Setup the custom .targets to run as 'BeforeMicrosoftNETSdkTargets'. This is because we want to be able to read properties
+    that are set in .csproj files, and set properties depending on those before the .NET SDK .targets are imported. This is
+    necessary to ensure that the .NET tooling works correctly with some of them (eg. with 'IsAotCompatible'). Note that the
+    .NET SDK doesn't use 'Exists' here, and '<Import>' supports multiple items, so we can just chain our .targets file directly.
+  -->
+  <PropertyGroup>
+    <BeforeMicrosoftNETSdkTargets>$(BeforeMicrosoftNETSdkTargets);$(MSBuildThisFileDirectory)Directory.Build.BeforeMicrosoftNETSdkTargets.targets</BeforeMicrosoftNETSdkTargets>
+  </PropertyGroup>
+</Project>
