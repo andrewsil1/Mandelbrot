@@ -1,13 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <ApplicationIcon>..\..\Assets\Mandelbrot.ico</ApplicationIcon>
     <TargetFramework>net8.0-windows</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
+    <Using Include="System.IO" />
     <ProjectReference Include="..\..\MandelbrotGpu.csproj" />
     <Compile Include="..\..\third_party\ComputeSharp\src\ComputeSharp\Graphics\Commands\FenceWaitPublication.cs" Link="FenceWaitPublication.cs" />
   </ItemGroup>

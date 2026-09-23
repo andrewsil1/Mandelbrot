@@ -4,6 +4,12 @@ using MandelbrotGpu;
 
 try
 {
+    if (args.Length > 0 && args[0] == "--mpfr-temporaries")
+    {
+        if (args.Length != 2) throw new ArgumentException("Usage: --mpfr-temporaries OUTPUT.jsonl");
+        MpfrTemporaryChecks.Profile(args[1]);
+        return;
+    }
     if (args.Length > 0 && args[0] == "--fma-production-smoke")
     {
         if (args.Length != 4) throw new ArgumentException("Usage: --fma-production-smoke LIVE_FRAMES.jsonl PRIOR_REPORT.jsonl OUTPUT.jsonl");
@@ -24,8 +30,10 @@ try
     SuspendedUiChecks.Run();
     FenceWaitChecks.Run();
     if (args.Contains("--safety-only")) return;
+    ProgressiveChecks.Run();
     DoubleDoubleArithmeticChecks.Run();
     RepairBudgetChecks.Run();
+    MpfrTemporaryChecks.Run();
     SparseRetryChecks.Run();
     if (args.Contains("--fp32-profile"))
     {

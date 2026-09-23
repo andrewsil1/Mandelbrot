@@ -43,6 +43,10 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         _ => 2
     };
 
+    // Borrowed arrays: the callback must consume them before returning. Sparse
+    // indices map compact DD output back to the original viewport.
+    internal Action<int[], int, int, int[]?>? PublishPixels { get; init; }
+
     public RenderResult Render(MandelbrotViewport viewport, int maxIterations)
         => RenderWithMode(viewport, maxIterations, SelectMode(viewport.Scale));
 
@@ -155,7 +159,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         if (validation is not null)
             timings.ValidationMilliseconds += validationTimer.Elapsed.TotalMilliseconds;
         DiagnosticTimer colorTimer = DiagnosticTimer.StartNew(MeasureTimings);
-        int[] pixels = HistogramColorizer.Colorize(iterations, maxIterations);
+        int[] pixels = HistogramColorizer.Colorize(iterations, maxIterations, out int[] histogramPalette);
         timings.ColoringMilliseconds = colorTimer.Elapsed.TotalMilliseconds;
 
         return new RenderResult(
@@ -169,6 +173,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
             timings,
             validation)
         {
+            HistogramPalette = histogramPalette,
             Float64GlitchCount = float64GlitchCount,
             UsedDoubleDoubleFallback = initialMode == RenderMode.PerturbationFloat64 && mode == RenderMode.PerturbationDoubleDouble
         };
@@ -213,6 +218,12 @@ public sealed partial class MandelbrotRenderer(int width, int height)
                     width,
                     offset,
                     maxIterations));
+            if (PublishPixels is not null)
+            {
+                int count = Math.Min(batchPixels, pixelCount - offset);
+                iterationBuffer.CopyTo(iterations.AsSpan(offset, count), offset);
+                PublishPixels(iterations, offset, count, null);
+            }
         }
 
         timer.Restart();
@@ -311,6 +322,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
                 {
                     queue.Drain();
                     pending = ReadSlice(iterationBuffer, readback, iterations.AsSpan(offset, count), offset, RenderMode.PerturbationFloat64);
+                    PublishPixels?.Invoke(iterations, offset, count, null);
                 }
                 else if (MeasureTimings) timings.SkippedSliceReadbacks++;
                 if (journal is { HasPending: false }) journal.Checkpoint(!pending || sliceEnd == maxIterations);
@@ -457,6 +469,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
                 {
                     queue.Drain();
                     pending = ReadSlice(buffers.Output, buffers.Readback, iterations.AsSpan(workOffset, count), workOffset, RenderMode.PerturbationDoubleDouble);
+                    PublishPixels?.Invoke(iterations, workOffset, count, pixelIndices);
                 }
                 else if (MeasureTimings) timings.SkippedSliceReadbacks++;
                 if (journal is { HasPending: false }) journal.Checkpoint(!pending || sliceEnd == maxIterations);
@@ -914,7 +927,9 @@ public sealed partial class MandelbrotRenderer(int width, int height)
             int x = index % width;
             int y = index / width;
             using MpfrComplex c = viewport.PointAtPixel(x, y, width, height);
-            return iterations[index] = MpfrMandelbrot.EscapeIterations(c, maxIterations);
+            int result = iterations[index] = MpfrMandelbrot.EscapeIterations(c, maxIterations);
+            PublishPixels?.Invoke(iterations, index, 1, null);
+            return result;
         });
         if (MeasureTimings) timings.RepairIterations += repaired.Work;
         return repaired.Count;

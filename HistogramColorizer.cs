@@ -18,6 +18,9 @@ internal static class HistogramColorizer
     ];
 
     public static int[] Colorize(int[] iterations, int maxIterations)
+        => Colorize(iterations, maxIterations, out _);
+
+    internal static int[] Colorize(int[] iterations, int maxIterations, out int[] palette)
     {
         int[] histogram = new int[maxIterations + 1];
         int escapedCount = 0;
@@ -46,6 +49,14 @@ internal static class HistogramColorizer
             cumulative[i] = running;
         }
 
+        palette = new int[histogram.Length];
+        for (int i = 0; i < palette.Length; i++)
+        {
+            Rgb color = SamplePalette(escapedCount == 0 ? 0 : (double)cumulative[i] / escapedCount);
+            palette[i] = escapedCount == 0 ? unchecked((int)0xFF020308)
+                : unchecked((int)(0xFF000000 | (uint)(color.R << 16) | (uint)(color.G << 8) | color.B));
+        }
+
         int[] pixels = new int[iterations.Length];
 
         for (int i = 0; i < iterations.Length; i++)
@@ -61,12 +72,18 @@ internal static class HistogramColorizer
                 continue;
             }
 
-            double t = (double)cumulative[iteration] / escapedCount;
-            Rgb color = SamplePalette(t);
-            pixels[i] = unchecked((int)(0xFF000000 | (uint)(color.R << 16) | (uint)(color.G << 8) | color.B));
+            pixels[i] = palette[iteration];
         }
 
         return pixels;
+    }
+
+    // First-render fallback, before any completed histogram is available.
+    internal static int PreviewColor(int iteration, int maxIterations)
+    {
+        if (iteration < 0) return unchecked((int)0xFF020308);
+        Rgb color = SamplePalette(Math.Log(1.0 + iteration) / Math.Log(1.0 + maxIterations));
+        return unchecked((int)(0xFF000000 | (uint)(color.R << 16) | (uint)(color.G << 8) | color.B));
     }
 
     private static Rgb SamplePalette(double t)

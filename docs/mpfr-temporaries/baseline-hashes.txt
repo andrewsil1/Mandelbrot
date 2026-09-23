@@ -1,0 +1,12 @@
+
+Algorithm : SHA256
+Hash      : 45C863A41B6ACD77697CF77F18DB1CB433EAE7B3E2F1BE601C5B3CC5EDB2ADB4
+Path      : C:\Users\andrewsi\OneDrive\Documents\Mandelbrot\MpfrMandelbrot.cs
+
+Algorithm : SHA256
+Hash      : 3A27CD442ED9AA4E9FCD848C4E712974CD1344C88472367B7FA603500827BAE5
+Path      : C:\Users\andrewsi\OneDrive\Documents\Mandelbrot\MpfrFloat.cs
+
+Algorithm : SHA256
+Hash      : 23D268E94162783F4B63379DF4B3B36188A63834CD779C914EE718B7885AA758
+Path      : C:\Users\andrewsi\OneDrive\Documents\Mandelbrot\MandelbrotRenderer.cs

@@ -13,6 +13,7 @@ public sealed record RenderResult(
     RenderTimings Timings,
     RenderValidation? Validation)
 {
+    internal int[]? HistogramPalette { get; init; }
     public int Float64GlitchCount { get; init; }
     public bool UsedDoubleDoubleFallback { get; init; }
 }

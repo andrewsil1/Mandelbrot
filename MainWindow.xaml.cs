@@ -24,6 +24,7 @@ public partial class MainWindow : Window
 
     private MandelbrotViewport view = MandelbrotViewport.FullSet(InitialImageWidth, InitialImageHeight);
     private WriteableBitmap? bitmap;
+    private int[]? histogramPalette;
     private int imageWidth = InitialImageWidth;
     private int imageHeight = InitialImageHeight;
     private bool isRendering;
@@ -59,6 +60,8 @@ public partial class MainWindow : Window
         // A fresh application session is required after a GPU safety failure.
         // Do not let a queued resize/click silently recreate and stress the device.
         if (gpuRenderingSuspended) return;
+        UpdateViewText();
+        BackButton.IsEnabled = history.Count > 0;
         LogUiValidation("request", view, imageWidth, imageHeight);
         if (isRendering)
         {
@@ -84,18 +87,29 @@ public partial class MainWindow : Window
         WriteableBitmap renderBitmap = bitmap;
         LogUiValidation("render-start", renderView, renderWidth, renderHeight);
 
+        int maxIterations = IterationBudget.ForScale(renderView.Scale);
+        ProgressiveFrame progress = new(renderWidth * renderHeight, maxIterations, histogramPalette);
+        DispatcherTimer presentationTimer = new(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromMilliseconds(33)
+        };
+        presentationTimer.Tick += (_, _) =>
+        {
+            if (ReferenceEquals(renderView, view) && ReferenceEquals(renderBitmap, bitmap))
+                progress.Apply(renderBitmap);
+        };
+        presentationTimer.Start();
         try
         {
             // Capture all mutable UI state before the background task starts.
             // Later resize/click events update fields and queue another render.
-            int maxIterations = IterationBudget.ForScale(renderView.Scale);
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             // Keep the UI thread responsive while ComputeSharp dispatches and
             // reads back the GPU work.
             RenderResult result = await Task.Run(() =>
             {
-                MandelbrotRenderer renderer = new(renderWidth, renderHeight);
+                MandelbrotRenderer renderer = new(renderWidth, renderHeight) { PublishPixels = progress.Publish };
                 return renderer.Render(renderView, maxIterations);
             });
             stopwatch.Stop();
@@ -103,7 +117,7 @@ public partial class MainWindow : Window
             // A resize may replace the bitmap while this render is running. If
             // that happened, discard the stale pixels and immediately queue a
             // render for the newest dimensions.
-            if (ReferenceEquals(renderBitmap, bitmap) && renderWidth == imageWidth && renderHeight == imageHeight)
+            if (ReferenceEquals(renderView, view) && ReferenceEquals(renderBitmap, bitmap) && renderWidth == imageWidth && renderHeight == imageHeight)
             {
                 // WPF expects BGRA32 packed into Int32 pixels. The renderer has
                 // already converted escape counts through the histogram palette.
@@ -112,6 +126,7 @@ public partial class MainWindow : Window
                     result.Pixels,
                     renderWidth * sizeof(int),
                     0);
+                histogramPalette = result.HistogramPalette;
             }
             else
             {
@@ -131,7 +146,7 @@ public partial class MainWindow : Window
             }
             BackButton.IsEnabled = history.Count > 0;
             LogUiValidation("render-complete", renderView, renderWidth, renderHeight,
-                new { applied = ReferenceEquals(renderBitmap, bitmap), latestView = ReferenceEquals(renderView, view),
+                new { applied = ReferenceEquals(renderView, view) && ReferenceEquals(renderBitmap, bitmap), latestView = ReferenceEquals(renderView, view),
                     queued = renderQueued, elapsedMs = stopwatch.Elapsed.TotalMilliseconds, status = StatusText.Text });
         }
         catch (GpuRenderSuspendedException ex)
@@ -151,6 +166,7 @@ public partial class MainWindow : Window
         }
         finally
         {
+            presentationTimer.Stop();
             Mouse.OverrideCursor = null;
             isRendering = false;
 
@@ -175,6 +191,7 @@ public partial class MainWindow : Window
         history.Push(view);
         try
         {
+            ScaleZoomPreview(e.GetPosition(FractalImage), ZoomInFactor);
             view = view.Zoom(center, ZoomInFactor);
         }
         finally
@@ -196,6 +213,7 @@ public partial class MainWindow : Window
         history.Push(view);
         try
         {
+            ScaleZoomPreview(e.GetPosition(FractalImage), ZoomOutFactor);
             view = view.Zoom(center, ZoomOutFactor);
         }
         finally
@@ -204,6 +222,28 @@ public partial class MainWindow : Window
         }
 
         await RenderAsync();
+    }
+
+    private void ScaleZoomPreview(Point click, double factor)
+    {
+        if (bitmap is null) return;
+        // Snapshot the currently visible composite, including partial updates.
+        // Drawing in physical pixel coordinates also handles high-DPI displays.
+        double x = click.X / FractalImage.ActualWidth * imageWidth;
+        double y = click.Y / FractalImage.ActualHeight * imageHeight;
+        DrawingVisual visual = new();
+        using (DrawingContext drawing = visual.RenderOpen())
+        {
+            drawing.DrawRectangle(new SolidColorBrush(Color.FromRgb(2, 3, 8)), null,
+                new Rect(0, 0, imageWidth, imageHeight));
+            drawing.DrawImage(bitmap, new Rect(imageWidth * 0.5 - x / factor,
+                imageHeight * 0.5 - y / factor, imageWidth / factor, imageHeight / factor));
+        }
+        RenderTargetBitmap preview = new(imageWidth, imageHeight, 96, 96, PixelFormats.Pbgra32);
+        preview.Render(visual);
+        int[] pixels = new int[imageWidth * imageHeight];
+        preview.CopyPixels(pixels, imageWidth * sizeof(int), 0);
+        bitmap.WritePixels(new Int32Rect(0, 0, imageWidth, imageHeight), pixels, imageWidth * sizeof(int), 0);
     }
 
     private async void ResetButton_Click(object sender, RoutedEventArgs e)
