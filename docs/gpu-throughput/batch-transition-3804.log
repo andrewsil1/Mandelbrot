@@ -1,0 +1,15 @@
+batch-4 round -1: 8396.3 ms, FP64 4825.0, DD 3129.0, journal 0.0, 3672 submissions
+batch-2 round -1: 9852.8 ms, FP64 5555.6, DD 3863.6, journal 0.0, 7290 submissions
+batch-1 round -1: 12908.6 ms, FP64 7117.4, DD 5350.7, journal 0.0, 14526 submissions
+batch-1 round 0: 12922.9 ms, FP64 7121.0, DD 5358.6, journal 0.0, 14526 submissions
+batch-2 round 0: 9847.1 ms, FP64 5548.6, DD 3862.3, journal 0.0, 7290 submissions
+batch-4 round 0: 8420.1 ms, FP64 4850.8, DD 3136.3, journal 0.0, 3672 submissions
+batch-4 round 1: 8424.3 ms, FP64 4851.0, DD 3130.3, journal 0.0, 3672 submissions
+batch-2 round 1: 9838.2 ms, FP64 5538.1, DD 3849.0, journal 0.0, 7290 submissions
+batch-1 round 1: 12934.8 ms, FP64 7112.5, DD 5370.1, journal 0.0, 14526 submissions
+batch-1 round 2: 12914.8 ms, FP64 7131.5, DD 5352.4, journal 0.0, 14526 submissions
+batch-2 round 2: 9846.2 ms, FP64 5552.7, DD 3863.0, journal 0.0, 7290 submissions
+batch-4 round 2: 8419.7 ms, FP64 4845.7, DD 3136.9, journal 0.0, 3672 submissions
+batch-4 round 3: 8431.0 ms, FP64 4844.8, DD 3136.8, journal 0.0, 3672 submissions
+batch-2 round 3: 9869.4 ms, FP64 5565.1, DD 3865.9, journal 0.0, 7290 submissions
+batch-1 round 3: 13081.5 ms, FP64 7138.1, DD 5383.5, journal 0.0, 14526 submissions

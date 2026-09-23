@@ -1,6 +1,6 @@
 namespace MandelbrotGpu;
 
-public sealed class MandelbrotViewport
+public sealed class MandelbrotViewport : IDisposable
 {
     // View state is stored in MPFR so repeated zoom clicks preserve coordinates
     // beyond the point where a double can represent screen-pixel deltas.
@@ -110,5 +110,12 @@ public sealed class MandelbrotViewport
     public string Describe()
     {
         return $"center=({CenterX.ToDisplayString()}, {CenterY.ToDisplayString()})  scale={Scale:E3}";
+    }
+
+    public void Dispose()
+    {
+        CenterX.Dispose();
+        CenterY.Dispose();
+        Height.Dispose();
     }
 }

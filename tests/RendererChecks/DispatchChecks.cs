@@ -30,9 +30,19 @@ internal static class DispatchChecks
             }
         }
 
+        if (GpuDispatchPolicy.BatchPixels(RenderMode.PerturbationFloat64, 128) != 131072
+            || GpuDispatchPolicy.BatchPixels(RenderMode.PerturbationDoubleDouble, 128) != 32768)
+            throw new Exception("Production perturbation batch capacity changed.");
+        foreach (int iterations in new[] { 128, 256, 1024, 6912, 32768 })
+        {
+            if ((long)GpuDispatchPolicy.BatchPixels(RenderMode.PerturbationFloat64, iterations) * iterations > 128_000_000
+                || (long)GpuDispatchPolicy.BatchPixels(RenderMode.PerturbationDoubleDouble, iterations) * iterations > 16_000_000)
+                throw new Exception("Wider batches exceeded the existing iteration-work ceiling.");
+        }
+
         // Direct and FP64 outputs must retain the global pixel index across
         // submissions, including the non-group-aligned final tail.
-        const int width = 521, height = 129, budget = 256;
+        const int width = 521, height = 257, budget = 256;
         MandelbrotViewport viewport = MandelbrotViewport.FullSet(width, height);
         MethodInfo direct = typeof(MandelbrotRenderer).GetMethod("RenderDirect", BindingFlags.Instance | BindingFlags.NonPublic)!;
         MethodInfo fp = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)

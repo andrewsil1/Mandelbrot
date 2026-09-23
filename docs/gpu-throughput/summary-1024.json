@@ -1,0 +1,44 @@
+[
+  {
+    "configuration": "journal-128",
+    "totalMs": 1713.4539,
+    "fp64Ms": 1067.32205,
+    "ddMs": 571.8849,
+    "journalMs": 653.4157500000001
+  },
+  {
+    "configuration": "publish-128",
+    "totalMs": 1062.10635,
+    "fp64Ms": 540.9300499999999,
+    "ddMs": 448.2721,
+    "journalMs": 0
+  },
+  {
+    "configuration": "quiet-128",
+    "totalMs": 1043.8769499999999,
+    "fp64Ms": 521.25335,
+    "ddMs": 442.74995,
+    "journalMs": 0
+  },
+  {
+    "configuration": "quiet-128-r8",
+    "totalMs": 1005.3702499999999,
+    "fp64Ms": 505.59900000000005,
+    "ddMs": 437.04185,
+    "journalMs": 0
+  },
+  {
+    "configuration": "quiet-256",
+    "totalMs": 1109.8132,
+    "fp64Ms": 517.98855,
+    "ddMs": 521.3983000000001,
+    "journalMs": 0
+  },
+  {
+    "configuration": "quiet-512",
+    "totalMs": 1165.21375,
+    "fp64Ms": 523.21455,
+    "ddMs": 581.40445,
+    "journalMs": 0
+  }
+]

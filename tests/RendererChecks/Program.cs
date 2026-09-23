@@ -4,6 +4,21 @@ using MandelbrotGpu;
 
 try
 {
+    if (args.Length > 0 && args[0] == "--gpu-throughput")
+    {
+        if (args.Length != 4) throw new ArgumentException("Usage: --gpu-throughput WIDTH FIXTURE OUTPUT.jsonl");
+        var (w, h) = ScalingChecks.Stage(args[1]);
+        GpuThroughputChecks.Profile(w, h, args[2], args[3]);
+        return;
+    }
+    if (args.Length > 0 && args[0] == "--allocation-checks")
+    {
+        if (args.Length > 2) throw new ArgumentException("Usage: --allocation-checks [PROFILE.jsonl]");
+        AllocationChecks.Run(args.Length == 2 ? args[1] : null);
+        ProgressiveChecks.Run();
+        RepairBudgetChecks.Run();
+        return;
+    }
     if (args.Length > 0 && args[0] == "--mpfr-temporaries")
     {
         if (args.Length != 2) throw new ArgumentException("Usage: --mpfr-temporaries OUTPUT.jsonl");
@@ -31,6 +46,7 @@ try
     FenceWaitChecks.Run();
     if (args.Contains("--safety-only")) return;
     ProgressiveChecks.Run();
+    AllocationChecks.Run();
     DoubleDoubleArithmeticChecks.Run();
     RepairBudgetChecks.Run();
     MpfrTemporaryChecks.Run();

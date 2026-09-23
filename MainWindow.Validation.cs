@@ -26,7 +26,7 @@ public partial class MainWindow
         {
             if (gpuRenderingSuspended || e.Key is not (Key.F6 or Key.F7)) return;
             validationFixture = e.Key == Key.F6 ? "transition" : "tip";
-            history.Clear();
+            ClearHistory();
             ApplyValidationFixture();
             e.Handled = true;
             await RenderAsync();
@@ -39,7 +39,8 @@ public partial class MainWindow
         bool tip = validationFixture == "tip";
         using MpfrComplex center = new(MpfrFloat.FromDouble(tip ? -2 : -0.67323438570448868, 384),
             MpfrFloat.FromDouble(tip ? 0 : 0.35743485497289235, 384));
-        view = MandelbrotViewport.FullSet(imageWidth, imageHeight).Zoom(center, tip ? 1E-28 : Math.ScaleB(1, -40));
+        using MandelbrotViewport full = MandelbrotViewport.FullSet(imageWidth, imageHeight);
+        ReplaceView(full.Zoom(center, tip ? 1E-28 : Math.ScaleB(1, -40)));
     }
 
     private void LogUiValidation(string phase, MandelbrotViewport snapshot, int width, int height, object? detail = null)

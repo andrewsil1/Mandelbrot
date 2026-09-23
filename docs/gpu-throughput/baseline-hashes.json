@@ -1,0 +1,27 @@
+[
+  {
+    "Algorithm": "SHA256",
+    "Hash": "F28D9E5F72CC1FE1087062D12AD74F23BDF119C4D0AB5B1DB227EF45582CF3DB",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\GpuDispatchPolicy.cs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "C50993802B81149B7BF8440F66D09802D70B012D61E30D6A82D1CAF029F5FE77",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MandelbrotRenderer.cs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "586B8B7EF0F7BB6EAD07941FC3A9BF12B19333D4DD98E15F518FEE256CD7E0E6",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\ProgressiveFrame.cs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "1C3CA7B22AB34442095AC8F523C91A6D56AC2B6EAD0BB39BFF4D750766E9FC0D",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\BoundedGpuQueue.cs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "E712779D91CDE78CCB4C6F6BD354199DB9E166B3680D94469AD2F54D726559D9",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\RendererDiagnostics.cs"
+  }
+]

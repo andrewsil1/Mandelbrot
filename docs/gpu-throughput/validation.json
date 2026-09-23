@@ -1,0 +1,41 @@
+{
+  "completedUtc": "2026-09-23T22:40:24.6499458Z",
+  "releaseExitCode": 0,
+  "debugExitCode": 0,
+  "submissionsPerSuite": 15960,
+  "boundedGroupsPerSuite": 3546,
+  "hashes": [
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\GpuDispatchPolicy.cs",
+      "Hash": "6D04A5FCED7C5249BA0D5A1C0F1A097035DB824C340D23F6D3280C7CFD7FB33B"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\GpuThroughputChecks.cs",
+      "Hash": "105F4978A3EAB9C83C35FC308221E2A631F3E2F7C06C95D3F393C22B9BE118F8"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\Program.cs",
+      "Hash": "A4AD983DAC982EEC7A07B06D1BE168DD78AEC4141096A315D21C9AAD3BDA7EE6"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\SliceChecks.cs",
+      "Hash": "3C1EB613A7871B52CDAAFB6B3C65844CD218F6618A6071328A056359030EDE70"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\DispatchChecks.cs",
+      "Hash": "6CC1BD436759377B68D12812B2657B8F66EF86A5B3C28A7898C4FECF154B8268"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\BlaProfilingChecks.cs",
+      "Hash": "2405B1AF58EEE7573065E88994A0A73332D7F6F4EB8F88539FCB046517FD2BB9"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\docs\\gpu-throughput\\regression-release.log",
+      "Hash": "8CBBC134A4DCA04F630E3B96AB33D5DED95063315BC58524F5EBDDED860841E7"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\docs\\gpu-throughput\\regression-debug.log",
+      "Hash": "703A79ECCD992480081281A51FCF78DE7209C537C9922CB2FA858D6B01BF05A4"
+    }
+  ]
+}

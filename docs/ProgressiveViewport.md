@@ -21,6 +21,19 @@ from superseded renders. GPU jobs still finish serially, with queued requests
 coalesced to the newest view. Perturbation updates follow the existing readback
 cadence rather than adding a readback after every compute submission.
 
+Presentation writes resolved pixels directly into the locked BGRA32 WPF back
+buffer; it does not maintain a second full-frame display array. Zoom preview
+also copies its rendered bitmap directly into that back buffer. Final coloring
+replaces the completed iteration array only after validation and all publication
+callbacks have finished, transferring ownership of that array to the result.
+
+Queued renders run through an iterative pump. Each frame owns a cloned MPFR
+viewport snapshot, while the UI disposes replaced views and retired history
+entries on resize, Reset, Back, and close. Identity checks still use the source
+viewport object, so a stale frame cannot update the current image. Closing the
+window retires UI-owned coordinates immediately; an active worker releases its
+own snapshot when its existing work finishes.
+
 `ProgressiveChecks` exercises preview preservation, sparse indexing, concurrent
 corrections, unchanged-update suppression, actual WPF row writes and off-center
 zoom-out scaling, plus progressive/final image equivalence on direct and deep

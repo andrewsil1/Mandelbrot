@@ -1,0 +1,47 @@
+{
+  "completedUtc": "2026-09-23T22:14:35.8000495Z",
+  "releaseExitCode": 0,
+  "debugExitCode": 0,
+  "hashes": [
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MandelbrotRenderer.cs",
+      "Hash": "C50993802B81149B7BF8440F66D09802D70B012D61E30D6A82D1CAF029F5FE77"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\ProgressiveFrame.cs",
+      "Hash": "586B8B7EF0F7BB6EAD07941FC3A9BF12B19333D4DD98E15F518FEE256CD7E0E6"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MainWindow.xaml.cs",
+      "Hash": "C95C1C0383EFE6273F1646B2B24EC500EBE3255580E0E830C66A6E4C34B8BD92"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MainWindow.Validation.cs",
+      "Hash": "0E34571753B6429FF64375EBBC24A40C8258C6CDC61F8593627A2855E24B335F"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\DeepZoomReferenceOrbit.cs",
+      "Hash": "75D92B721995EEF20C0742813DEF8E8D63553B5C2483D5B1351358CF08727290"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MandelbrotViewport.cs",
+      "Hash": "AD6233A753BAAECBDECFA16BD41C41AE76515809FA2BDA47604F50F7897AC748"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\HistogramColorizer.cs",
+      "Hash": "2F2F7F8C8760478DBA26BE3FEEA86591D73BE1EE650CC1EE469ACA8FCF6A8E1A"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\tests\\RendererChecks\\AllocationChecks.cs",
+      "Hash": "92A125E6B4D998019EA093A7380DDFDB262C6A7D3D2474D9B289E24565FACB6F"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\docs\\allocation-reduction\\regression-release.log",
+      "Hash": "2563C7E26FB19B2AA713E0EFFAB5A9BC30BC654E5C735D17FF17C61277418C40"
+    },
+    {
+      "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\docs\\allocation-reduction\\regression-debug.log",
+      "Hash": "DCE369640D9F42C3972B06FB7A2C67A27E97417F3766E925B22F9F4236C4D7D6"
+    }
+  ]
+}

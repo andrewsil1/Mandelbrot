@@ -29,6 +29,7 @@ public partial class MainWindow : Window
     private int imageHeight = InitialImageHeight;
     private bool isRendering;
     private bool gpuRenderingSuspended;
+    private bool isClosed;
 
     // A resize or click can arrive while the GPU is still busy. Coalesce those
     // changes into one follow-up render instead of starting overlapping jobs.
@@ -46,6 +47,14 @@ public partial class MainWindow : Window
             Interval = TimeSpan.FromMilliseconds(250)
         };
         resizeTimer.Tick += ResizeTimer_Tick;
+        Closed += (_, _) =>
+        {
+            isClosed = true;
+            renderQueued = false;
+            resizeTimer.Stop();
+            ClearHistory();
+            view.Dispose();
+        };
 
         Loaded += async (_, _) =>
         {
@@ -59,7 +68,7 @@ public partial class MainWindow : Window
     {
         // A fresh application session is required after a GPU safety failure.
         // Do not let a queued resize/click silently recreate and stress the device.
-        if (gpuRenderingSuspended) return;
+        if (gpuRenderingSuspended || isClosed) return;
         UpdateViewText();
         BackButton.IsEnabled = history.Count > 0;
         LogUiValidation("request", view, imageWidth, imageHeight);
@@ -77,14 +86,37 @@ public partial class MainWindow : Window
         }
 
         isRendering = true;
+        try
+        {
+            // One frame task at a time; completed frames do not remain on a
+            // recursive async chain while newer requests are rendered.
+            do
+            {
+                renderQueued = false;
+                await RenderFrameAsync();
+            }
+            while (renderQueued && !gpuRenderingSuspended && !isClosed);
+        }
+        finally
+        {
+            Mouse.OverrideCursor = null;
+            isRendering = false;
+        }
+    }
+
+    private async Task RenderFrameAsync()
+    {
         Mouse.OverrideCursor = Cursors.Wait;
         StatusText.Text = "Rendering...";
         UpdateViewText();
 
         int renderWidth = imageWidth;
         int renderHeight = imageHeight;
-        MandelbrotViewport renderView = view;
-        WriteableBitmap renderBitmap = bitmap;
+        MandelbrotViewport sourceView = view;
+        // UI navigation owns the live/history viewports. The worker owns a
+        // separate snapshot until all GPU work, repairs and logging finish.
+        using MandelbrotViewport renderView = view.WithAspect(view.Aspect);
+        WriteableBitmap renderBitmap = bitmap!;
         LogUiValidation("render-start", renderView, renderWidth, renderHeight);
 
         int maxIterations = IterationBudget.ForScale(renderView.Scale);
@@ -95,7 +127,7 @@ public partial class MainWindow : Window
         };
         presentationTimer.Tick += (_, _) =>
         {
-            if (ReferenceEquals(renderView, view) && ReferenceEquals(renderBitmap, bitmap))
+            if (!isClosed && ReferenceEquals(sourceView, view) && ReferenceEquals(renderBitmap, bitmap))
                 progress.Apply(renderBitmap);
         };
         presentationTimer.Start();
@@ -113,11 +145,12 @@ public partial class MainWindow : Window
                 return renderer.Render(renderView, maxIterations);
             });
             stopwatch.Stop();
+            if (isClosed) return;
 
             // A resize may replace the bitmap while this render is running. If
             // that happened, discard the stale pixels and immediately queue a
             // render for the newest dimensions.
-            if (ReferenceEquals(renderView, view) && ReferenceEquals(renderBitmap, bitmap) && renderWidth == imageWidth && renderHeight == imageHeight)
+            if (ReferenceEquals(sourceView, view) && ReferenceEquals(renderBitmap, bitmap) && renderWidth == imageWidth && renderHeight == imageHeight)
             {
                 // WPF expects BGRA32 packed into Int32 pixels. The renderer has
                 // already converted escape counts through the histogram palette.
@@ -146,7 +179,7 @@ public partial class MainWindow : Window
             }
             BackButton.IsEnabled = history.Count > 0;
             LogUiValidation("render-complete", renderView, renderWidth, renderHeight,
-                new { applied = ReferenceEquals(renderView, view) && ReferenceEquals(renderBitmap, bitmap), latestView = ReferenceEquals(renderView, view),
+                new { applied = ReferenceEquals(sourceView, view) && ReferenceEquals(renderBitmap, bitmap), latestView = ReferenceEquals(sourceView, view),
                     queued = renderQueued, elapsedMs = stopwatch.Elapsed.TotalMilliseconds, status = StatusText.Text });
         }
         catch (GpuRenderSuspendedException ex)
@@ -167,14 +200,6 @@ public partial class MainWindow : Window
         finally
         {
             presentationTimer.Stop();
-            Mouse.OverrideCursor = null;
-            isRendering = false;
-
-            if (renderQueued)
-            {
-                renderQueued = false;
-                await RenderAsync();
-            }
         }
     }
 
@@ -188,11 +213,12 @@ public partial class MainWindow : Window
 
         // Save the exact MPFR viewport so Back restores deep coordinates, not
         // just their rounded display representation.
-        history.Push(view);
         try
         {
             ScaleZoomPreview(e.GetPosition(FractalImage), ZoomInFactor);
-            view = view.Zoom(center, ZoomInFactor);
+            MandelbrotViewport next = view.Zoom(center, ZoomInFactor);
+            history.Push(view);
+            view = next;
         }
         finally
         {
@@ -210,11 +236,12 @@ public partial class MainWindow : Window
             return;
         }
 
-        history.Push(view);
         try
         {
             ScaleZoomPreview(e.GetPosition(FractalImage), ZoomOutFactor);
-            view = view.Zoom(center, ZoomOutFactor);
+            MandelbrotViewport next = view.Zoom(center, ZoomOutFactor);
+            history.Push(view);
+            view = next;
         }
         finally
         {
@@ -241,15 +268,32 @@ public partial class MainWindow : Window
         }
         RenderTargetBitmap preview = new(imageWidth, imageHeight, 96, 96, PixelFormats.Pbgra32);
         preview.Render(visual);
-        int[] pixels = new int[imageWidth * imageHeight];
-        preview.CopyPixels(pixels, imageWidth * sizeof(int), 0);
-        bitmap.WritePixels(new Int32Rect(0, 0, imageWidth, imageHeight), pixels, imageWidth * sizeof(int), 0);
+        bitmap.Lock();
+        try
+        {
+            preview.CopyPixels(Int32Rect.Empty, bitmap.BackBuffer,
+                checked(bitmap.BackBufferStride * imageHeight), bitmap.BackBufferStride);
+            bitmap.AddDirtyRect(new Int32Rect(0, 0, imageWidth, imageHeight));
+        }
+        finally { bitmap.Unlock(); }
+    }
+
+    private void ClearHistory()
+    {
+        while (history.TryPop(out MandelbrotViewport? previous)) previous.Dispose();
+    }
+
+    private void ReplaceView(MandelbrotViewport next)
+    {
+        MandelbrotViewport previous = view;
+        view = next;
+        previous.Dispose();
     }
 
     private async void ResetButton_Click(object sender, RoutedEventArgs e)
     {
         if (gpuRenderingSuspended) return;
-        history.Clear();
+        ClearHistory();
         EnsureRenderTarget(resetView: true);
         await RenderAsync();
     }
@@ -261,7 +305,8 @@ public partial class MainWindow : Window
         {
             // The saved view may have been captured at a different window
             // aspect. Restore center/zoom, then adapt to the current shape.
-            view = previous.WithAspect((double)imageWidth / imageHeight);
+            using (previous)
+                ReplaceView(previous.WithAspect((double)imageWidth / imageHeight));
             await RenderAsync();
         }
     }
@@ -316,9 +361,9 @@ public partial class MainWindow : Window
 
         // Reset returns to the full set. Resize preserves the current vertical
         // complex-plane span and only changes the horizontal span for aspect.
-        view = resetView
+        ReplaceView(resetView
             ? MandelbrotViewport.FullSet(imageWidth, imageHeight)
-            : view.WithAspect((double)imageWidth / imageHeight);
+            : view.WithAspect((double)imageWidth / imageHeight));
 
         UpdateViewText();
         return true;

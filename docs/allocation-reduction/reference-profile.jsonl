@@ -1,0 +1,14 @@
+{"round":-1,"allocating":false,"repeats":24,"milliseconds":58.1609,"managedBytes":5318248}
+{"round":-1,"allocating":true,"repeats":24,"milliseconds":132.0387,"managedBytes":33543784}
+{"round":0,"allocating":true,"repeats":24,"milliseconds":128.0097,"managedBytes":33543784}
+{"round":0,"allocating":false,"repeats":24,"milliseconds":59.0402,"managedBytes":5318248}
+{"round":1,"allocating":false,"repeats":24,"milliseconds":61.4802,"managedBytes":5318248}
+{"round":1,"allocating":true,"repeats":24,"milliseconds":124.5098,"managedBytes":33543784}
+{"round":2,"allocating":true,"repeats":24,"milliseconds":121.202,"managedBytes":33543784}
+{"round":2,"allocating":false,"repeats":24,"milliseconds":55.7011,"managedBytes":5318248}
+{"round":3,"allocating":false,"repeats":24,"milliseconds":55.0071,"managedBytes":5318248}
+{"round":3,"allocating":true,"repeats":24,"milliseconds":114.5296,"managedBytes":33543784}
+{"round":4,"allocating":true,"repeats":24,"milliseconds":124.8893,"managedBytes":33543784}
+{"round":4,"allocating":false,"repeats":24,"milliseconds":59.4465,"managedBytes":5318248}
+{"round":5,"allocating":false,"repeats":24,"milliseconds":84.724,"managedBytes":5318248}
+{"round":5,"allocating":true,"repeats":24,"milliseconds":146.7046,"managedBytes":33543784}

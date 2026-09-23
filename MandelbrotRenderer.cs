@@ -128,10 +128,12 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         if (mode == RenderMode.PerturbationFloat64 && glitchCount > fallbackLimit)
         {
             mode = RenderMode.PerturbationDoubleDouble;
-            using PerturbationBuffers buffers = new(device, width * height, maxIterations);
             using MpfrComplex referencePoint = new(viewport.CenterX.Clone(), viewport.CenterY.Clone());
             int[] active = Enumerable.Range(0, iterations.Length)
                 .Where(index => iterations[index] == EscapeClassification.Glitch).ToArray();
+            // Recovery only removes pixels from this list; retries fit in the
+            // initial unresolved capacity rather than requiring a full frame.
+            using PerturbationBuffers buffers = new(device, active.Length, maxIterations);
             int[] candidate = RenderPerturbationDoubleDouble(viewport, referencePoint, maxIterations, active, buffers);
             MergeResolved(iterations, active, candidate);
             referencePasses = 2 + AddExtraReferencePasses(viewport, iterations, maxIterations, buffers);
@@ -159,7 +161,9 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         if (validation is not null)
             timings.ValidationMilliseconds += validationTimer.Elapsed.TotalMilliseconds;
         DiagnosticTimer colorTimer = DiagnosticTimer.StartNew(MeasureTimings);
-        int[] pixels = HistogramColorizer.Colorize(iterations, maxIterations, out int[] histogramPalette);
+        // Validation and all iteration callbacks are complete. Transfer this
+        // array to the result after replacing counts with final colors.
+        int[] pixels = HistogramColorizer.ColorizeInPlace(iterations, maxIterations, out int[] histogramPalette);
         timings.ColoringMilliseconds = colorTimer.Elapsed.TotalMilliseconds;
 
         return new RenderResult(

@@ -97,12 +97,12 @@ internal static class BlaProfilingChecks
             Environment.SetEnvironmentVariable("MANDELBROT_METRICS", "1");
             foreach (double scale in new[] { Math.ScaleB(1, -40), 1E-20, 1E-28 })
             {
-                const int width = 257, height = 65, budget = 1024;
+                const int width = 513, height = 129, budget = 1024;
                 using MpfrComplex center = new(MpfrFloat.FromDouble(-0.743643887037151, 384), MpfrFloat.FromDouble(0.13182590420533, 384));
                 MandelbrotViewport view = MandelbrotViewport.FullSet(width, height).Zoom(center, scale);
-                using MpfrComplex alternate = view.PointAtPixel(128, 32, width, height);
+                using MpfrComplex alternate = view.PointAtPixel(width / 2, height / 2, width, height);
                 int[][] sets = [Enumerable.Range(0, width * height).Where(i => i % 2 == 0).Reverse().ToArray(),
-                    Enumerable.Range(0, width * height).Where(i => Math.Abs(i % width - 128) <= 3 && Math.Abs(i / width - 32) <= 3).Reverse().ToArray()];
+                    Enumerable.Range(0, width * height).Where(i => Math.Abs(i % width - width / 2) <= 3 && Math.Abs(i / width - height / 2) <= 3).Reverse().ToArray()];
                 foreach (int[] indices in sets)
                 foreach (MpfrComplex reference in new[] { center, alternate })
                 {
@@ -151,7 +151,7 @@ internal static class BlaProfilingChecks
 #endif
         }
         finally { for (int i = 0; i < Variables.Length; i++) Environment.SetEnvironmentVariable(Variables[i], previous[i]); }
-        Console.WriteLine($"Sparse BLA raw/profile validation passed: 768-bit MPFR, alternate references, reversed/duplicate-free sparse maps, 8192 seam, exact profiling equivalence; skipped={skipped}, detailed searches={searches}, accepted={accepted} (Debug-only counters).");
+        Console.WriteLine($"Sparse BLA raw/profile validation passed: 768-bit MPFR, alternate references, reversed/duplicate-free sparse maps, 32768 seam, exact profiling equivalence; skipped={skipped}, detailed searches={searches}, accepted={accepted} (Debug-only counters).");
     }
 
     public static void Run(int width, int height, string fixture, string path)

@@ -5,6 +5,10 @@ namespace MandelbrotGpu;
 // These are conservative work limits, not a guarantee of runtime on every GPU.
 internal static class GpuDispatchPolicy
 {
+    // The harness can replay the old (1x) and intermediate (2x) capacities.
+    // Production uses 4x: 131072 FP64 / 32768 DD pixels at 128-step slices.
+    // The existing iteration-work ceilings still reduce longer submissions.
+    internal static int? BatchScaleOverride { get; set; }
     // One retains synchronous execution for comparison. Two overlaps host
     // recording with preceding GPU work without creating an unbounded backlog.
     public static int InFlightSubmissions()
@@ -59,6 +63,10 @@ internal static class GpuDispatchPolicy
             RenderMode.PerturbationDoubleDouble => (8_192, 16_000_000),
             _ => throw new ArgumentOutOfRangeException(nameof(mode))
         };
+        int batchScale = BatchScaleOverride ?? 4;
+        if (batchScale is not (1 or 2 or 4))
+            throw new InvalidOperationException("Unsupported experimental batch scale.");
+        if (mode != RenderMode.DirectFloat64) pixelLimit *= batchScale;
         int count = (int)Math.Min(pixelLimit, iterationLimit / Math.Max(1, maxIterations));
         return Math.Max(64, count / 64 * 64);
     }

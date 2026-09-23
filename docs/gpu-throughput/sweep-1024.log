@@ -1,0 +1,33 @@
+C:\Users\andrewsi\OneDrive\Documents\Mandelbrot\MandelbrotGpu.csproj : warning NU1701: Package 'Baseclass.Contrib.Nuget.Output 2.4.1' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0-windows7.0'. This package may not be fully compatible with your project.
+C:\Users\andrewsi\OneDrive\Documents\Mandelbrot\MandelbrotGpu.csproj : warning NU1701: Package 'Math.Gmp.Native.NET 2.0.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0-windows7.0'. This package may not be fully compatible with your project.
+C:\Users\andrewsi\OneDrive\Documents\Mandelbrot\MandelbrotGpu.csproj : warning NU1701: Package 'Math.Mpfr.Native.NET 2.0.0' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net8.0-windows7.0'. This package may not be fully compatible with your project.
+publish-128 round -1: 1193.3 ms, FP64 564.1, DD 514.7, journal 0.0, 1134 submissions
+quiet-128-r8 round -1: 998.0 ms, FP64 497.1, DD 436.5, journal 0.0, 1134 submissions
+quiet-512 round -1: 1155.1 ms, FP64 521.3, DD 580.8, journal 0.0, 294 submissions
+quiet-256 round -1: 1098.9 ms, FP64 523.0, DD 523.8, journal 0.0, 567 submissions
+quiet-128 round -1: 1026.3 ms, FP64 524.3, DD 443.9, journal 0.0, 1134 submissions
+journal-128 round -1: 1723.4 ms, FP64 1106.2, DD 567.3, journal 682.9, 1134 submissions
+journal-128 round 0: 1652.9 ms, FP64 1038.6, DD 564.4, journal 619.6, 1134 submissions
+quiet-128 round 0: 1011.4 ms, FP64 519.2, DD 441.9, journal 0.0, 1134 submissions
+quiet-256 round 0: 1087.1 ms, FP64 515.5, DD 520.4, journal 0.0, 567 submissions
+quiet-512 round 0: 1153.8 ms, FP64 524.0, DD 580.8, journal 0.0, 294 submissions
+quiet-128-r8 round 0: 994.2 ms, FP64 506.8, DD 435.3, journal 0.0, 1134 submissions
+publish-128 round 0: 1019.9 ms, FP64 516.8, DD 444.9, journal 0.0, 1134 submissions
+publish-128 round 1: 1051.8 ms, FP64 545.4, DD 448.4, journal 0.0, 1134 submissions
+quiet-128-r8 round 1: 992.8 ms, FP64 504.4, DD 436.3, journal 0.0, 1134 submissions
+quiet-512 round 1: 1157.7 ms, FP64 521.3, DD 582.0, journal 0.0, 294 submissions
+quiet-256 round 1: 1113.5 ms, FP64 521.3, DD 524.6, journal 0.0, 567 submissions
+quiet-128 round 1: 1053.1 ms, FP64 521.3, DD 443.6, journal 0.0, 1134 submissions
+journal-128 round 1: 1709.9 ms, FP64 1062.6, DD 576.6, journal 652.7, 1134 submissions
+journal-128 round 2: 1717.0 ms, FP64 1072.0, DD 574.2, journal 659.5, 1134 submissions
+quiet-128 round 2: 1050.6 ms, FP64 539.7, DD 440.9, journal 0.0, 1134 submissions
+quiet-256 round 2: 1110.8 ms, FP64 520.1, DD 522.4, journal 0.0, 567 submissions
+quiet-512 round 2: 1180.8 ms, FP64 524.9, DD 582.2, journal 0.0, 294 submissions
+quiet-128-r8 round 2: 1016.6 ms, FP64 501.1, DD 437.8, journal 0.0, 1134 submissions
+publish-128 round 2: 1074.8 ms, FP64 550.6, DD 448.1, journal 0.0, 1134 submissions
+publish-128 round 3: 1072.4 ms, FP64 536.5, DD 461.3, journal 0.0, 1134 submissions
+quiet-128-r8 round 3: 1045.3 ms, FP64 528.4, DD 442.6, journal 0.0, 1134 submissions
+quiet-512 round 3: 1172.7 ms, FP64 522.5, DD 578.8, journal 0.0, 294 submissions
+quiet-256 round 3: 1108.8 ms, FP64 515.8, DD 519.6, journal 0.0, 567 submissions
+quiet-128 round 3: 1037.2 ms, FP64 521.2, DD 443.6, journal 0.0, 1134 submissions
+journal-128 round 3: 1721.9 ms, FP64 1076.2, DD 569.5, journal 654.2, 1134 submissions

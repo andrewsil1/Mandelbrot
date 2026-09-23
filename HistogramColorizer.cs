@@ -21,6 +21,12 @@ internal static class HistogramColorizer
         => Colorize(iterations, maxIterations, out _);
 
     internal static int[] Colorize(int[] iterations, int maxIterations, out int[] palette)
+        => ColorizeInto(iterations, maxIterations, new int[iterations.Length], out palette);
+
+    internal static int[] ColorizeInPlace(int[] iterations, int maxIterations, out int[] palette)
+        => ColorizeInto(iterations, maxIterations, iterations, out palette);
+
+    private static int[] ColorizeInto(int[] iterations, int maxIterations, int[] pixels, out int[] palette)
     {
         int[] histogram = new int[maxIterations + 1];
         int escapedCount = 0;
@@ -56,8 +62,6 @@ internal static class HistogramColorizer
             palette[i] = escapedCount == 0 ? unchecked((int)0xFF020308)
                 : unchecked((int)(0xFF000000 | (uint)(color.R << 16) | (uint)(color.G << 8) | color.B));
         }
-
-        int[] pixels = new int[iterations.Length];
 
         for (int i = 0; i < iterations.Length; i++)
         {

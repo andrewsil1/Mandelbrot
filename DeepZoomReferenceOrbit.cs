@@ -39,55 +39,50 @@ public sealed class DeepZoomReferenceOrbit
         double[] imaginaryHigh = new double[maxIterations];
         double[] imaginaryLow = new double[maxIterations];
 
-        MpfrFloat zr = MpfrFloat.FromDouble(0, PrecisionBits);
-        MpfrFloat zi = MpfrFloat.FromDouble(0, PrecisionBits);
+        using MpfrFloat zr = MpfrFloat.FromDouble(0, PrecisionBits);
+        using MpfrFloat zi = MpfrFloat.FromDouble(0, PrecisionBits);
+        using MpfrFloat zr2 = MpfrFloat.FromDouble(0, PrecisionBits);
+        using MpfrFloat zi2 = MpfrFloat.FromDouble(0, PrecisionBits);
+        using MpfrFloat zrZi = MpfrFloat.FromDouble(0, PrecisionBits);
+        using MpfrFloat twoZrZi = MpfrFloat.FromDouble(0, PrecisionBits);
+        using MpfrFloat zr2MinusZi2 = MpfrFloat.FromDouble(0, PrecisionBits);
+        using MpfrFloat residual = MpfrFloat.FromDouble(0, PrecisionBits);
         int length = maxIterations;
 
-        try
+        // Reuse one residual for both DD conversions. Neither conversion nor
+        // the recurrence changes precision or operation/rounding order.
+        DoubleDouble Split(MpfrFloat value)
         {
-            for (int i = 0; i < maxIterations; i++)
-            {
-                // Collapse the MPFR value to a double-double pair for GPU
-                // consumption. ComputeSharp can translate the scalar math in
-                // the shader; it cannot run MPFR itself on the GPU.
-                DoubleDouble real = zr.ToDoubleDouble();
-                DoubleDouble imaginary = zi.ToDoubleDouble();
-                realHigh[i] = real.High;
-                realLow[i] = real.Low;
-                imaginaryHigh[i] = imaginary.High;
-                imaginaryLow[i] = imaginary.Low;
-                // Stop before an escaping reference grows without bound. Its
-                // last finite value remains available to reconstruct/rebase.
-                if (real.High * real.High + imaginary.High * imaginary.High > 4.0)
-                {
-                    length = i + 1;
-                    break;
-                }
-
-                // Advance z = z^2 + c in MPFR. The temporary values are owned
-                // by this loop iteration and disposed immediately after the
-                // next persistent z values have been produced.
-                using MpfrFloat zr2 = zr.Multiply(zr);
-                using MpfrFloat zi2 = zi.Multiply(zi);
-                using MpfrFloat zrZi = zr.Multiply(zi);
-                using MpfrFloat twoZrZi = zrZi.Multiply(2.0);
-                using MpfrFloat zr2MinusZi2 = zr2.Subtract(zi2);
-
-                MpfrFloat nextZr = zr2MinusZi2.Add(referencePoint.Real);
-                MpfrFloat nextZi = twoZrZi.Add(referencePoint.Imaginary);
-
-                zr.Dispose();
-                zi.Dispose();
-                zr = nextZr;
-                zi = nextZi;
-            }
+            double high = value.ToDouble();
+            NativeMpfr.mpfr_sub_d(residual.Handle, value.Handle, high, NativeMpfr.RoundToNearest);
+            return new DoubleDouble(high, residual.ToDouble());
         }
-        finally
+        for (int i = 0; i < maxIterations; i++)
         {
-            // zr and zi are reassigned inside the loop, so a finally block is
-            // the safest place to release whichever instances are current.
-            zr.Dispose();
-            zi.Dispose();
+            // Collapse the MPFR value to a double-double pair for GPU
+            // consumption. ComputeSharp can translate the scalar math in
+            // the shader; it cannot run MPFR itself on the GPU.
+            DoubleDouble real = Split(zr);
+            DoubleDouble imaginary = Split(zi);
+            realHigh[i] = real.High;
+            realLow[i] = real.Low;
+            imaginaryHigh[i] = imaginary.High;
+            imaginaryLow[i] = imaginary.Low;
+            // Stop before an escaping reference grows without bound. Its
+            // last finite value remains available to reconstruct/rebase.
+            if (real.High * real.High + imaginary.High * imaginary.High > 4.0)
+            {
+                length = i + 1;
+                break;
+            }
+
+            NativeMpfr.mpfr_mul(zr2.Handle, zr.Handle, zr.Handle, NativeMpfr.RoundToNearest);
+            NativeMpfr.mpfr_mul(zi2.Handle, zi.Handle, zi.Handle, NativeMpfr.RoundToNearest);
+            NativeMpfr.mpfr_mul(zrZi.Handle, zr.Handle, zi.Handle, NativeMpfr.RoundToNearest);
+            NativeMpfr.mpfr_mul_d(twoZrZi.Handle, zrZi.Handle, 2.0, NativeMpfr.RoundToNearest);
+            NativeMpfr.mpfr_sub(zr2MinusZi2.Handle, zr2.Handle, zi2.Handle, NativeMpfr.RoundToNearest);
+            NativeMpfr.mpfr_add(zr.Handle, zr2MinusZi2.Handle, referencePoint.Real.Handle, NativeMpfr.RoundToNearest);
+            NativeMpfr.mpfr_add(zi.Handle, twoZrZi.Handle, referencePoint.Imaginary.Handle, NativeMpfr.RoundToNearest);
         }
 
         return new DeepZoomReferenceOrbit(realHigh, realLow, imaginaryHigh, imaginaryLow) { Length = length };

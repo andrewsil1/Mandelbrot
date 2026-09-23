@@ -1,0 +1,26 @@
+[
+  {
+    "name": "batch-1",
+    "totalMs": 4251.77455,
+    "fp64Ms": 2516.6901,
+    "ddMs": 1553.11645,
+    "dispatches": 3932,
+    "maxSubmissionMs": 19.4936
+  },
+  {
+    "name": "batch-2",
+    "totalMs": 3333.8747000000003,
+    "fp64Ms": 1981.5258,
+    "ddMs": 1175.70515,
+    "dispatches": 2040,
+    "maxSubmissionMs": 30.2749
+  },
+  {
+    "name": "batch-4",
+    "totalMs": 2835.10065,
+    "fp64Ms": 1704.9944,
+    "ddMs": 949.4462000000001,
+    "dispatches": 1048,
+    "maxSubmissionMs": 51.7881
+  }
+]

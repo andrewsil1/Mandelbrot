@@ -128,9 +128,9 @@ internal static class SliceChecks
 
     private static void CheckBatchAndReferenceReuse()
     {
-        // Cross the 8192-pixel DD batch boundary and reuse state across a new
+        // Cross the 32768-pixel DD batch boundary and reuse state across a new
         // reference and a short, unordered sparse prefix. No MPFR repair involved.
-        const int width = 131, height = 67, budget = 257;
+        const int width = 257, height = 129, budget = 257;
         Environment.SetEnvironmentVariable("MANDELBROT_ACCELERATION", "rebase");
         using MpfrComplex reference = new(MpfrFloat.FromDouble(-1.7548776662466927, 384), MpfrFloat.FromDouble(0, 384));
         MandelbrotViewport view = MandelbrotViewport.FullSet(width, height).Zoom(reference, 1E-20);
@@ -141,9 +141,9 @@ internal static class SliceChecks
         MandelbrotRenderer renderer = new(width, height);
         using IDisposable buffers = (IDisposable)Activator.CreateInstance(BufferType, GraphicsDevice.GetDefault(), baseline.Length, budget)!;
         int stateLength = ((ReadWriteBuffer<double>)BufferType.GetProperty("State")!.GetValue(buffers)!).Length;
-        if (stateLength != 8192 * 7) throw new Exception("DD state allocation is not bounded by batch size.");
+        if (stateLength != 32768 * 7) throw new Exception("DD state allocation is not bounded by batch size.");
         ReadBackBuffer<int> readback = (ReadBackBuffer<int>)BufferType.GetProperty("Readback")!.GetValue(buffers)!;
-        if (readback.Length != 8192) throw new Exception("Readback staging is not batch-sized.");
+        if (readback.Length != 32768) throw new Exception("Readback staging is not batch-sized.");
         int[] full = (int[])Dd.Invoke(renderer, [view, reference, budget, Enumerable.Range(0, baseline.Length).ToArray(), buffers])!;
         if (!full.SequenceEqual(baseline)) throw new Exception("Resumed DD batch seam mismatch.");
         using MpfrComplex secondReference = view.PointAtPixel(32, 16, width, height);
@@ -174,8 +174,8 @@ internal static class SliceChecks
 
     private static void CheckReadbackSeams()
     {
-        // Cross both FP64's 32768-pixel seam and DD's 8192-pixel seams.
-        const int width = 259, height = 129, budget = 257;
+        // Cross both FP64's 131072-pixel seam and DD's 32768-pixel seams.
+        const int width = 515, height = 257, budget = 257;
         Environment.SetEnvironmentVariable("MANDELBROT_ACCELERATION", "rebase");
         Environment.SetEnvironmentVariable("MANDELBROT_SLICE_ITERATIONS", "7");
         using MpfrComplex reference = new(MpfrFloat.FromDouble(-1.7548776662466927, 384), MpfrFloat.FromDouble(0, 384));
@@ -186,7 +186,7 @@ internal static class SliceChecks
             int[] baseline = Raw(width, height, view, reference, budget, dd, out RenderTimings before);
             Environment.SetEnvironmentVariable("MANDELBROT_READBACK_SLICES", "8");
             int[] delayed = Raw(width, height, view, reference, budget, dd, out RenderTimings after);
-            int batchSize = dd ? 8192 : 32768;
+            int batchSize = dd ? 32768 : 131072;
             CheckDelayed(baseline, delayed, before, after, 8, (baseline.Length + batchSize - 1) / batchSize);
         }
         Console.WriteLine("Delayed readback FP64/DD batch seams passed; sparse reference reuse also uses interval 8.");

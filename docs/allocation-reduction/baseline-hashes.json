@@ -1,0 +1,27 @@
+[
+  {
+    "Algorithm": "SHA256",
+    "Hash": "23D268E94162783F4B63379DF4B3B36188A63834CD779C914EE718B7885AA758",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MandelbrotRenderer.cs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "E9D3292B758D0C63503CE788239489FF19C97E0B959DFED631EEC7A1D8122E22",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\ProgressiveFrame.cs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "54BAAF7C8FDD62D9BA4CD2B985CCDF77B39987ECD461113B3E3776E8D2713A8E",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MainWindow.xaml.cs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "EC0FE3430C77B20C90FD81D741BBDD7E085F695361F2ADA087E9A5F317B936C4",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\DeepZoomReferenceOrbit.cs"
+  },
+  {
+    "Algorithm": "SHA256",
+    "Hash": "9BD0E7EE7E0BA711DEC871B74D6AEFD7AE3BDC0EE8BF862B788E2F02FA816F1C",
+    "Path": "C:\\Users\\andrewsi\\OneDrive\\Documents\\Mandelbrot\\MandelbrotViewport.cs"
+  }
+]
