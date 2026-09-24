@@ -1,2 +1,0 @@
-MPFR temporary checks passed: 280 boundary pixels at 384/768 bits, independent allocating baseline and zero/interior budgets.
-MPFR profile passed: 27 actual repair pixels; docs/allocation-reduction/before.jsonl

@@ -3,3 +3,16 @@ obj/
 *.user
 *.suo
 .vs/
+
+# Routine build and diagnostic output; retain curated summaries explicitly.
+*.log
+*.binlog
+*.stdout.txt
+*.stderr.txt
+/docs/**/dispatch/
+/docs/**/*.dispatch/
+/docs/**/dispatch-logs/
+/docs/**/*.gpu.jsonl
+/docs/**/*-gpu.jsonl
+/docs/**/resources.jsonl
+/docs/**/*.jsonl.hlsl
