@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.6.11822.322 stable
+VisualStudioVersion = 18.6.11822.322
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MandelbrotGpu", "MandelbrotGpu.csproj", "{349D1C85-DC52-9A41-20A8-CE4CDE99CF65}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "third_party", "third_party", "{0DC175A4-010F-A5A8-72A9-B7A5E3C716E6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComputeSharp.Runtime", "third_party\ComputeSharp.Runtime\ComputeSharp.Runtime.csproj", "{ED084A77-02C9-4059-9D88-2E0629185209}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,9 +19,16 @@ Global
 		{349D1C85-DC52-9A41-20A8-CE4CDE99CF65}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{349D1C85-DC52-9A41-20A8-CE4CDE99CF65}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{349D1C85-DC52-9A41-20A8-CE4CDE99CF65}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ED084A77-02C9-4059-9D88-2E0629185209}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ED084A77-02C9-4059-9D88-2E0629185209}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ED084A77-02C9-4059-9D88-2E0629185209}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ED084A77-02C9-4059-9D88-2E0629185209}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{ED084A77-02C9-4059-9D88-2E0629185209} = {0DC175A4-010F-A5A8-72A9-B7A5E3C716E6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {77A36969-91E2-4856-9C4F-22094D975A54}
