@@ -1,5 +1,7 @@
 # FMA double-double recovery experiment
 
+> Post-v1.5 cleanup: the completed experiment summarizer and promotion smoke harness were removed. Recorded results remain available.
+
 > Promotion: FMA now lives in the production DD shader. The experimental shader,
 > renderer switch, generator and `--fma-experiment` entry point have been removed.
 > The results and experiment reproduction commands below are historical evidence.

@@ -1,5 +1,7 @@
 # Production FMA double-double arithmetic
 
+> Post-v1.5 cleanup: the one-off --fma-production-smoke harness was removed after promotion. The normal suite retains production GPU arithmetic checks; the saved smoke command below is historical.
+
 The production DD perturbation shader uses explicit
 `Hlsl.FusedMultiplyAdd(a, b, -product)` to recover the rounded high-product
 residual in multiplication and squaring. Cross-term addition order,

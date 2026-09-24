@@ -94,15 +94,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         }
         else if (mode == RenderMode.PerturbationFloat64)
         {
-            if (ExperimentalFp32)
-            {
-                int[] seed = RenderExperimentalFp32(viewport, maxIterations);
-                ExperimentalAccepted = seed.Count(v => v != EscapeClassification.Glitch);
-                using MpfrComplex referencePoint = new(viewport.CenterX.Clone(), viewport.CenterY.Clone());
-                iterations = ExperimentalAccepted == seed.Length ? seed
-                    : RenderPerturbationFloat64(viewport, referencePoint, maxIterations, seed);
-            }
-            else iterations = RenderPerturbationFloat64(viewport, maxIterations);
+            iterations = RenderPerturbationFloat64(viewport, maxIterations);
         }
         else if (mode == RenderMode.PerturbationDoubleDouble)
         {
@@ -244,9 +236,6 @@ public sealed partial class MandelbrotRenderer(int width, int height)
     }
 
     private int[] RenderPerturbationFloat64(MandelbrotViewport viewport, MpfrComplex referencePoint, int maxIterations)
-        => RenderPerturbationFloat64(viewport, referencePoint, maxIterations, null);
-
-    private int[] RenderPerturbationFloat64(MandelbrotViewport viewport, MpfrComplex referencePoint, int maxIterations, int[]? seed)
     {
         DiagnosticTimer timer = DiagnosticTimer.StartNew(MeasureTimings);
         DeepZoomReferenceOrbit reference = DeepZoomReferenceOrbit.Build(referencePoint, maxIterations);
@@ -255,7 +244,6 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         int pixelCount = width * height;
         int[] iterations = new int[pixelCount];
         using ReadWriteBuffer<int> iterationBuffer = device.AllocateReadWriteBuffer<int>(pixelCount);
-        if (seed is not null) iterationBuffer.CopyFrom(seed);
         using ReadOnlyBuffer<double> referenceReal = device.AllocateReadOnlyBuffer(reference.RealHigh);
         using ReadOnlyBuffer<double> referenceImaginary = device.AllocateReadOnlyBuffer(reference.ImaginaryHigh);
         timings.UploadMilliseconds += timer.Elapsed.TotalMilliseconds;
@@ -317,7 +305,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
                         offset,
                         sliceStart,
                         sliceEnd,
-                        maxIterations, seed is not null), sliceStart, sliceEnd, journal, iterationBuffer, state, metrics, inFlight > 1 ? queue : null);
+                        maxIterations), sliceStart, sliceEnd, journal, iterationBuffer, state, metrics, inFlight > 1 ? queue : null);
                 // The copy queue cannot read outputs until every preceding compute
                 // submission is consumed. Shared batch state stays ordered by UAV
                 // barriers on the one existing compute queue, never parallel queues.

@@ -4,13 +4,6 @@ using MandelbrotGpu;
 
 try
 {
-    if (args.Length > 0 && args[0] == "--gpu-throughput")
-    {
-        if (args.Length != 4) throw new ArgumentException("Usage: --gpu-throughput WIDTH FIXTURE OUTPUT.jsonl");
-        var (w, h) = ScalingChecks.Stage(args[1]);
-        GpuThroughputChecks.Profile(w, h, args[2], args[3]);
-        return;
-    }
     if (args.Length > 0 && args[0] == "--allocation-checks")
     {
         if (args.Length > 2) throw new ArgumentException("Usage: --allocation-checks [PROFILE.jsonl]");
@@ -23,12 +16,6 @@ try
     {
         if (args.Length != 2) throw new ArgumentException("Usage: --mpfr-temporaries OUTPUT.jsonl");
         MpfrTemporaryChecks.Profile(args[1]);
-        return;
-    }
-    if (args.Length > 0 && args[0] == "--fma-production-smoke")
-    {
-        if (args.Length != 4) throw new ArgumentException("Usage: --fma-production-smoke LIVE_FRAMES.jsonl PRIOR_REPORT.jsonl OUTPUT.jsonl");
-        FmaProductionChecks.Run(args[1], args[2], args[3]);
         return;
     }
     ProductionChecks.CheckConfiguration();
@@ -51,13 +38,6 @@ try
     RepairBudgetChecks.Run();
     MpfrTemporaryChecks.Run();
     SparseRetryChecks.Run();
-    if (args.Contains("--fp32-profile"))
-    {
-        if (args.Length != 4) throw new ArgumentException("Usage: --fp32-profile WIDTH LIVE_FRAMES.jsonl OUTPUT.jsonl");
-        var (w, h) = ScalingChecks.Stage(args[1]);
-        Fp32ExperimentChecks.Profile(w, h, args[2], args[3]);
-        return;
-    }
     if (args.Contains("--cost-profile") || args.Contains("--responsiveness-profile"))
     {
         if (args.Length != 4) throw new ArgumentException("Usage: --responsiveness-profile WIDTH LIVE_FRAMES.jsonl OUTPUT.jsonl");
@@ -153,7 +133,6 @@ try
         return;
     }
 
-    Fp32ExperimentChecks.Run();
     TimingChecks.CheckQuietAttribution();
     Environment.SetEnvironmentVariable("MANDELBROT_METRICS", "1");
 

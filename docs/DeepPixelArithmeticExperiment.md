@@ -1,5 +1,7 @@
 # Deep-pixel arithmetic: cost attribution and bounded FP32 experiment
 
+> Historical experiment: the unsuccessful FP32 shader, renderer path and harness were removed after v1.5. Commands below describe the archived experiment; recorded evidence is retained.
+
 ## Decision
 
 Keep the application on its existing FP64-first, sparse-DD, bounded-MPFR

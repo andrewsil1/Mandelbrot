@@ -1,5 +1,7 @@
 # Wider perturbation batches
 
+> Post-v1.5 cleanup: the completed batch sweep and BatchScaleOverride were removed. Production capacities are now explicit constants; regression seam checks remain. Reproduction commands below require the v1.5 checkout.
+
 The renderer now dispatches up to 131,072 FP64 pixels or 32,768 double-double
 pixels per batch, four times the previous capacities. Direct FP64 rendering
 is unchanged. Iteration slices remain 128 steps, readback remains every four

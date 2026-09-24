@@ -26,8 +26,7 @@ public readonly partial struct MandelbrotPerturbationFloat64Shader(
     int workOffset,
     int sliceStart,
     int sliceEnd,
-    int maxIterations,
-    bool seeded = false) : IComputeShader
+    int maxIterations) : IComputeShader
 {
     // This is not a machine-epsilon threshold. It is a practical validity
     // heuristic for perturbation rendering: if the reconstructed orbit is tiny
@@ -39,7 +38,6 @@ public readonly partial struct MandelbrotPerturbationFloat64Shader(
     {
         int index = workOffset + ThreadIds.X;
         bool firstSlice = sliceStart == 0;
-        if (firstSlice && seeded && iterations[index] != EscapeClassification.Glitch) return;
         if (!firstSlice && iterations[index] != EscapeClassification.Pending) return;
         int s = ThreadIds.X * 5;
         int x = index % width;

@@ -4,7 +4,7 @@ Production DD uses explicit FP64 FMA. The normal suite runs a GPU probe of its
 actual multiplication, squaring and binary scaling helpers, with a fused-residual
 check and 768-bit MPFR arithmetic comparisons. See
 [FmaProduction.md](../../docs/FmaProduction.md) for promotion evidence and the
-single-frame saved-viewport smoke command. Historical `--fma-experiment` A/B
+historical saved-viewport smoke evidence. The one-off smoke harness and historical `--fma-experiment` A/B
 mode has been removed.
 
 Repair-budget and increasing-resolution viewport workloads are documented in
