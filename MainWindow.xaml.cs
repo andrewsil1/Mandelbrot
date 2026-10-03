@@ -206,7 +206,19 @@ public partial class MainWindow : Window
     private async void FractalImage_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         if (gpuRenderingSuspended) return;
-        if (!TryGetComplexPoint(e.GetPosition(FractalImage), out MpfrComplex? center) || center is null)
+        await ZoomAtAsync(e.GetPosition(FractalImage), ZoomInFactor);
+    }
+
+    private async void FractalImage_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (gpuRenderingSuspended) return;
+        await ZoomAtAsync(e.GetPosition(FractalImage), ZoomOutFactor);
+    }
+
+    private async Task ZoomAtAsync(Point position, double factor)
+    {
+        if (gpuRenderingSuspended) return;
+        if (!TryGetComplexPoint(position, out MpfrComplex? center) || center is null)
         {
             return;
         }
@@ -215,31 +227,8 @@ public partial class MainWindow : Window
         // just their rounded display representation.
         try
         {
-            ScaleZoomPreview(e.GetPosition(FractalImage), ZoomInFactor);
-            MandelbrotViewport next = view.Zoom(center, ZoomInFactor);
-            history.Push(view);
-            view = next;
-        }
-        finally
-        {
-            center.Dispose();
-        }
-
-        await RenderAsync();
-    }
-
-    private async void FractalImage_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (gpuRenderingSuspended) return;
-        if (!TryGetComplexPoint(e.GetPosition(FractalImage), out MpfrComplex? center) || center is null)
-        {
-            return;
-        }
-
-        try
-        {
-            ScaleZoomPreview(e.GetPosition(FractalImage), ZoomOutFactor);
-            MandelbrotViewport next = view.Zoom(center, ZoomOutFactor);
+            ScaleZoomPreview(position, factor);
+            MandelbrotViewport next = view.Zoom(center, factor);
             history.Push(view);
             view = next;
         }

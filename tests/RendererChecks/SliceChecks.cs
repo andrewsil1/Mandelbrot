@@ -1,4 +1,3 @@
-using System.Reflection;
 using System.Text.Json;
 using ComputeSharp;
 using MandelbrotGpu;
@@ -7,32 +6,14 @@ internal static class SliceChecks
 {
     public static void Run()
     {
-        string? originalSlice = Environment.GetEnvironmentVariable("MANDELBROT_SLICE_ITERATIONS");
-        string? originalAcceleration = Environment.GetEnvironmentVariable("MANDELBROT_ACCELERATION");
-        string? originalReadback = Environment.GetEnvironmentVariable("MANDELBROT_READBACK_SLICES");
-        try
-        {
-            CheckFixtures();
-            CheckBatchAndReferenceReuse();
-            CheckReadbackSeams();
-            CheckJournal();
-        }
-        finally
-        {
-            Environment.SetEnvironmentVariable("MANDELBROT_SLICE_ITERATIONS", originalSlice);
-            Environment.SetEnvironmentVariable("MANDELBROT_ACCELERATION", originalAcceleration);
-            Environment.SetEnvironmentVariable("MANDELBROT_READBACK_SLICES", originalReadback);
-        }
+        using EnvironmentScope environment = new("MANDELBROT_SLICE_ITERATIONS",
+            "MANDELBROT_ACCELERATION", "MANDELBROT_READBACK_SLICES");
+        CheckFixtures();
+        CheckBatchAndReferenceReuse();
+        CheckReadbackSeams();
+        CheckJournal();
         Console.WriteLine("Slice validation passed: FP64/DD state resume, BLA boundaries, sparse maps, batch/reference reuse, journal metadata.");
     }
-
-    private static readonly Assembly Assembly = typeof(MandelbrotRenderer).Assembly;
-    private static readonly Type BufferType = Assembly.GetType("MandelbrotGpu.PerturbationBuffers")!;
-    private static readonly MethodInfo Fp = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(m => m.Name == "RenderPerturbationFloat64" && m.GetParameters().Length == 3);
-    private static readonly MethodInfo Dd = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(m => m.Name == "RenderPerturbationDoubleDouble" && m.GetParameters().Length == 5);
-    private static readonly MethodInfo Mpfr = Assembly.GetType("MandelbrotGpu.MpfrMandelbrot")!.GetMethod("EscapeIterations")!;
 
     private static void CheckFixtures()
     {
@@ -55,7 +36,7 @@ internal static class SliceChecks
             int[] expected = Enumerable.Range(0, width * height).Select(index =>
             {
                 using MpfrComplex point = view.PointAtPixel(index % width, index / width, width, height);
-                return (int)Mpfr.Invoke(null, [point, fixture.Budget, (uint)768])!;
+                return MpfrMandelbrot.EscapeIterations(point, fixture.Budget, 768);
             }).ToArray();
             foreach (string acceleration in new[] { "none", "rebase", "bla" })
             foreach (bool dd in new[] { false, true })
@@ -103,11 +84,11 @@ internal static class SliceChecks
         int[] result;
         if (dd)
         {
-            using IDisposable buffers = (IDisposable)Activator.CreateInstance(BufferType, GraphicsDevice.GetDefault(), width * height, budget)!;
-            result = (int[])Dd.Invoke(renderer, [view, reference, budget, Enumerable.Range(0, width * height).ToArray(), buffers])!;
+            using PerturbationBuffers buffers = new(GraphicsDevice.GetDefault(), width * height, budget);
+            result = renderer.RenderPerturbationDoubleDouble(view, reference, budget, Enumerable.Range(0, width * height).ToArray(), buffers);
         }
-        else result = (int[])Fp.Invoke(renderer, [view, reference, budget])!;
-        timings = (RenderTimings)typeof(MandelbrotRenderer).GetField("timings", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(renderer)!;
+        else result = renderer.RenderPerturbationFloat64(view, reference, budget);
+        timings = renderer.Timings;
         return result;
     }
 
@@ -139,22 +120,22 @@ internal static class SliceChecks
         Environment.SetEnvironmentVariable("MANDELBROT_SLICE_ITERATIONS", "7");
         Environment.SetEnvironmentVariable("MANDELBROT_READBACK_SLICES", "8");
         MandelbrotRenderer renderer = new(width, height);
-        using IDisposable buffers = (IDisposable)Activator.CreateInstance(BufferType, GraphicsDevice.GetDefault(), baseline.Length, budget)!;
-        int stateLength = ((ReadWriteBuffer<double>)BufferType.GetProperty("State")!.GetValue(buffers)!).Length;
+        using PerturbationBuffers buffers = new(GraphicsDevice.GetDefault(), baseline.Length, budget);
+        int stateLength = buffers.State.Length;
         if (stateLength != 32768 * 7) throw new Exception("DD state allocation is not bounded by batch size.");
-        ReadBackBuffer<int> readback = (ReadBackBuffer<int>)BufferType.GetProperty("Readback")!.GetValue(buffers)!;
+        ReadBackBuffer<int> readback = buffers.Readback;
         if (readback.Length != 32768) throw new Exception("Readback staging is not batch-sized.");
-        int[] full = (int[])Dd.Invoke(renderer, [view, reference, budget, Enumerable.Range(0, baseline.Length).ToArray(), buffers])!;
+        int[] full = renderer.RenderPerturbationDoubleDouble(view, reference, budget, Enumerable.Range(0, baseline.Length).ToArray(), buffers);
         if (!full.SequenceEqual(baseline)) throw new Exception("Resumed DD batch seam mismatch.");
         using MpfrComplex secondReference = view.PointAtPixel(32, 16, width, height);
         int[] sparse = Enumerable.Range(0, baseline.Length).Reverse().Take(137).ToArray();
-        int[] actual = (int[])Dd.Invoke(renderer, [view, secondReference, budget, sparse, buffers])!;
-        if (!ReferenceEquals(readback, BufferType.GetProperty("Readback")!.GetValue(buffers)))
+        int[] actual = renderer.RenderPerturbationDoubleDouble(view, secondReference, budget, sparse, buffers);
+        if (!ReferenceEquals(readback, buffers.Readback))
             throw new Exception("Sparse reference retry replaced the readback staging buffer.");
         for (int index = 0; index < sparse.Length; index++)
         {
             using MpfrComplex point = view.PointAtPixel(sparse[index] % width, sparse[index] / width, width, height);
-            int expected = (int)Mpfr.Invoke(null, [point, budget, (uint)768])!;
+            int expected = MpfrMandelbrot.EscapeIterations(point, budget, 768);
             if (actual[index] < -2 || (actual[index] != -2 && actual[index] != expected))
                 throw new Exception("Sparse reference reuse failed MPFR comparison.");
         }
@@ -194,7 +175,7 @@ internal static class SliceChecks
 
     private static void CheckJournal()
     {
-        string path = (string)Assembly.GetType("MandelbrotGpu.DispatchJournal")!.GetProperty("LogPath")!.GetValue(null)!;
+        string path = DispatchJournal.LogPath;
         bool resumed = false;
         foreach (string line in File.ReadLines(path))
         {

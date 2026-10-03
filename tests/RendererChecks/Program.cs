@@ -1,4 +1,3 @@
-using System.Reflection;
 using ComputeSharp;
 using MandelbrotGpu;
 
@@ -139,17 +138,13 @@ try
     const int width = 67;
     const int height = 35;
     const int budget = 256;
-    Assembly assembly = typeof(MandelbrotRenderer).Assembly;
-    Type bufferType = assembly.GetType("MandelbrotGpu.PerturbationBuffers")!;
-    MethodInfo dispatch = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(method => method.Name == "RenderPerturbationDoubleDouble" && method.GetParameters().Length == 5);
 
     MandelbrotViewport viewport = MandelbrotViewport.FullSet(width, height);
     MandelbrotRenderer renderer = new(width, height);
     using MpfrComplex reference = new(viewport.CenterX.Clone(), viewport.CenterY.Clone());
-    using IDisposable buffers = (IDisposable)Activator.CreateInstance(bufferType, GraphicsDevice.GetDefault(), width * height, budget)!;
+    using PerturbationBuffers buffers = new(GraphicsDevice.GetDefault(), width * height, budget);
     int[] fullIndices = Enumerable.Range(0, width * height).ToArray();
-    int[] Full(int[] indices) => (int[])dispatch.Invoke(renderer, [viewport, reference, budget, indices, buffers])!;
+    int[] Full(int[] indices) => renderer.RenderPerturbationDoubleDouble(viewport, reference, budget, indices, buffers);
     int[] full = Full(fullIndices);
 
     // Unordered indices and non-threadgroup-sized tails exercise mapping, partial
@@ -165,17 +160,14 @@ try
 
     int[] seeded = (int[])full.Clone();
     int[] seededIndices = Enumerable.Range(30, 10).Select(x => (height / 2) * width + x).ToArray();
-    int glitch = (int)assembly.GetType("MandelbrotGpu.EscapeClassification")!.GetField("Glitch")!.GetRawConstantValue()!;
+    int glitch = EscapeClassification.Glitch;
     foreach (int index in seededIndices) seeded[index] = glitch;
-    MethodInfo retries = typeof(MandelbrotRenderer).GetMethod("AddExtraReferencePasses", BindingFlags.Instance | BindingFlags.NonPublic)!;
-    RenderTimings timings = (RenderTimings)typeof(MandelbrotRenderer)
-        .GetField("timings", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(renderer)!;
+    RenderTimings timings = renderer.Timings;
     long before = timings.PerturbationPixelEvaluations;
-    int passes = (int)retries.Invoke(renderer, [viewport, seeded, budget, buffers])!;
+    int passes = renderer.AddExtraReferencePasses(viewport, seeded, budget, buffers);
     if (passes != 0 || timings.PerturbationPixelEvaluations != before)
         throw new Exception("Reference retries ran despite the tail fitting the repair budget.");
-    MethodInfo merge = typeof(MandelbrotRenderer).GetMethod("MergeResolved", BindingFlags.Static | BindingFlags.NonPublic)!;
-    int resolved = (int)merge.Invoke(null, [seeded, seededIndices, seededIndices.Select(index => full[index]).ToArray()])!;
+    int resolved = MandelbrotRenderer.MergeResolved(seeded, seededIndices, seededIndices.Select(index => full[index]).ToArray());
     if (resolved != seededIndices.Length || !seeded.SequenceEqual(full))
         throw new Exception("Sparse merge changed trusted pixels or failed to resolve the tail.");
     Console.WriteLine("Retry budget and sparse merge passed: no unnecessary retries, trusted pixels preserved.");
@@ -193,9 +185,7 @@ try
     }
 
     // Check the DD pixel-center mapping directly before repairs can conceal errors.
-    Type validationType = assembly.GetType("MandelbrotGpu.NumericalValidation")!;
-    RenderValidation validation = (RenderValidation)validationType.GetMethod("Check")!
-        .Invoke(null, [viewport, full, width, height, budget])!;
+    RenderValidation validation = NumericalValidation.Check(viewport, full, width, height, budget);
     if (validation.Mismatches != 0 || validation.Unresolved != 0)
         throw new Exception($"Raw double-double validation failed: {validation}");
     Console.WriteLine("Raw double-double pixel-center validation passed.");
@@ -208,11 +198,11 @@ try
         MandelbrotViewport largeView = MandelbrotViewport.FullSet(largeWidth, 1932);
         MandelbrotRenderer largeRenderer = new(largeWidth, 1932);
         using MpfrComplex largeReference = new(largeView.CenterX.Clone(), largeView.CenterY.Clone());
-        using IDisposable largeBuffers = (IDisposable)Activator.CreateInstance(bufferType, GraphicsDevice.GetDefault(), count, 1)!;
-        ReadWriteBuffer<int> output = (ReadWriteBuffer<int>)bufferType.GetProperty("Output")!.GetValue(largeBuffers)!;
+        using PerturbationBuffers largeBuffers = new(GraphicsDevice.GetDefault(), count, 1);
+        ReadWriteBuffer<int> output = largeBuffers.Output;
         output.CopyFrom(Enumerable.Repeat(int.MinValue, count).ToArray());
         int[] indices = Enumerable.Range(0, count).Reverse().ToArray();
-        int[] result = (int[])dispatch.Invoke(largeRenderer, [largeView, largeReference, 1, indices, largeBuffers])!;
+        int[] result = largeRenderer.RenderPerturbationDoubleDouble(largeView, largeReference, 1, indices, largeBuffers);
         // With one iteration, z_0 is zero and every pixel reaches the budget.
         if (result.Any(value => value != -1))
             throw new Exception($"Batched dispatch failed at {count} pixels.");

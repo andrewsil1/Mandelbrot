@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Reflection;
 using System.Text.Json;
 using ComputeSharp;
 using MandelbrotGpu;
@@ -7,15 +6,6 @@ using MandelbrotGpu;
 // Measurements are an explicit harness operation, not a runtime tuning system.
 internal static class PrecisionProfilingChecks
 {
-    private static readonly Assembly Assembly = typeof(MandelbrotRenderer).Assembly;
-    private static readonly Type Buffer = Assembly.GetType("MandelbrotGpu.PerturbationBuffers")!;
-    private static readonly MethodInfo Fp = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(m => m.Name == "RenderPerturbationFloat64" && m.GetParameters().Length == 3);
-    private static readonly MethodInfo Dd = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(m => m.Name == "RenderPerturbationDoubleDouble" && m.GetParameters().Length == 5);
-    private static readonly MethodInfo Pipeline = typeof(MandelbrotRenderer).GetMethod("RenderWithMode", BindingFlags.Instance | BindingFlags.NonPublic)!;
-    private static readonly MethodInfo Mpfr = Assembly.GetType("MandelbrotGpu.MpfrMandelbrot")!.GetMethod("EscapeIterations")!;
-    private static readonly FieldInfo Timings = typeof(MandelbrotRenderer).GetField("timings", BindingFlags.Instance | BindingFlags.NonPublic)!;
     private static readonly string[] Variables = ["MANDELBROT_DIAGNOSTICS", "MANDELBROT_VALIDATE", "MANDELBROT_METRICS",
         "MANDELBROT_ACCELERATION", "MANDELBROT_BLA_PROFILE", "MANDELBROT_BLA_MIN_BLOCK", "MANDELBROT_INFLIGHT",
         "MANDELBROT_READBACK_SLICES", "MANDELBROT_SLICE_ITERATIONS"];
@@ -34,11 +24,11 @@ internal static class PrecisionProfilingChecks
     ];
 
     internal static RenderResult Render(MandelbrotRenderer renderer, MandelbrotViewport view, int budget, bool dd)
-        => (RenderResult)Pipeline.Invoke(renderer, [view, budget, dd ? RenderMode.PerturbationDoubleDouble : RenderMode.PerturbationFloat64])!;
+        => renderer.RenderWithMode(view, budget, dd ? RenderMode.PerturbationDoubleDouble : RenderMode.PerturbationFloat64);
 
     public static void Run(int width, int height, string path)
     {
-        string?[] previous = Variables.Select(Environment.GetEnvironmentVariable).ToArray();
+        EnvironmentScope environment = new(Variables);
         void Write(object value) => File.AppendAllText(path, JsonSerializer.Serialize(value) + Environment.NewLine);
         try
         {
@@ -58,7 +48,7 @@ internal static class PrecisionProfilingChecks
                 int[] expected = samples.Select(i =>
                 {
                     using MpfrComplex point = view.PointAtPixel(i % width, i / width, width, height);
-                    return (int)Mpfr.Invoke(null, [point, fixture.Budget, (uint)768])!;
+                    return MpfrMandelbrot.EscapeIterations(point, fixture.Budget, 768);
                 }).ToArray();
                 Environment.SetEnvironmentVariable("MANDELBROT_DIAGNOSTICS", "1");
                 Environment.SetEnvironmentVariable("MANDELBROT_METRICS", "1");
@@ -69,14 +59,14 @@ internal static class PrecisionProfilingChecks
                 {
                     bool dd = mode == 1;
                     MandelbrotRenderer renderer = new(width, height);
-                    using IDisposable buffers = (IDisposable)Activator.CreateInstance(Buffer, GraphicsDevice.GetDefault(), indices.Length, fixture.Budget)!;
-                    raw[mode] = dd ? (int[])Dd.Invoke(renderer, [view, center, fixture.Budget, indices, buffers])!
-                        : (int[])Fp.Invoke(renderer, [view, center, fixture.Budget])!;
+                    using PerturbationBuffers buffers = new(GraphicsDevice.GetDefault(), indices.Length, fixture.Budget);
+                    raw[mode] = dd ? renderer.RenderPerturbationDoubleDouble(view, center, fixture.Budget, indices, buffers)
+                        : renderer.RenderPerturbationFloat64(view, center, fixture.Budget);
                     for (int j = 0; j < samples.Length; j++)
                         if (raw[mode][samples[j]] != -2 && raw[mode][samples[j]] != expected[j])
                             throw new Exception($"{fixture.Name}/{dd}: trusted raw count disagrees with MPFR at {samples[j]}.");
                     Write(new { phase = "raw", fixture.Name, fixture.Scale, fixture.Budget, width, height, dd,
-                        glitches = raw[mode].Count(v => v == -2), samples = samples.Length, timings = Timings.GetValue(renderer) });
+                        glitches = raw[mode].Count(v => v == -2), samples = samples.Length, timings = renderer.Timings });
                     baselines[mode] = Render(new(width, height), view, fixture.Budget, dd);
                     Write(new { phase = "pipeline", fixture.Name, dd, baselines[mode].Mode, baselines[mode].ReferencePasses,
                         baselines[mode].RepairedCount, baselines[mode].UnresolvedGlitchCount, baselines[mode].Validation, baselines[mode].Timings });
@@ -92,20 +82,19 @@ internal static class PrecisionProfilingChecks
                 int[] failed = indices.Where(i => raw[0][i] == -2).ToArray();
                 if (failed.Length > 0)
                 {
-                    object tile = typeof(MandelbrotRenderer).GetMethod("FindWorstGlitchTile", BindingFlags.Instance | BindingFlags.NonPublic)!
-                        .Invoke(new MandelbrotRenderer(width, height), [raw[0], new HashSet<int>()])!;
-                    int x = (int)tile.GetType().GetProperty("ReferenceX")!.GetValue(tile)!;
-                    int y = (int)tile.GetType().GetProperty("ReferenceY")!.GetValue(tile)!;
+                    var tile = new MandelbrotRenderer(width, height).FindWorstGlitchTile(raw[0], new HashSet<int>())!.Value;
+                    int x = tile.ReferenceX;
+                    int y = tile.ReferenceY;
                     using MpfrComplex alternate = view.PointAtPixel(x, y, width, height);
                     MandelbrotRenderer renderer = new(width, height);
-                    int[] retry = (int[])Fp.Invoke(renderer, [view, alternate, fixture.Budget])!;
+                    int[] retry = renderer.RenderPerturbationFloat64(view, alternate, fixture.Budget);
                     for (int j = 0; j < samples.Length; j++)
                         if (retry[samples[j]] != -2 && retry[samples[j]] != expected[j])
                             throw new Exception("Alternate FP64 reference failed MPFR.");
                     if (retry.Where((v, i) => v != -2 && raw[1][i] != -2 && v != raw[1][i]).Any())
                         throw new Exception("Alternate FP64 reference changed a trusted count.");
                     Write(new { phase = "alternate-reference", fixture.Name, failed = failed.Length,
-                        recovered = failed.Count(i => retry[i] != -2), x, y, timings = Timings.GetValue(renderer) });
+                        recovered = failed.Count(i => retry[i] != -2), x, y, timings = renderer.Timings });
                 }
 
                 if (baselines.Any(result => result.UnresolvedGlitchCount != 0))
@@ -120,7 +109,7 @@ internal static class PrecisionProfilingChecks
 
                 Environment.SetEnvironmentVariable("MANDELBROT_DIAGNOSTICS", "0");
                 Environment.SetEnvironmentVariable("MANDELBROT_METRICS", "0");
-                string journal = (string)Assembly.GetType("MandelbrotGpu.DispatchJournal")!.GetProperty("LogPath")!.GetValue(null)!;
+                string journal = DispatchJournal.LogPath;
                 int[] order = [0, 1, 0, 1, 1, 0, 0, 1, 1, 0];
                 for (int run = 0; run < order.Length; run++)
                 {
@@ -143,6 +132,6 @@ internal static class PrecisionProfilingChecks
             }
             Write(new { phase = "passed" });
         }
-        finally { for (int i = 0; i < Variables.Length; i++) Environment.SetEnvironmentVariable(Variables[i], previous[i]); }
+        finally { environment.Dispose(); }
     }
 }

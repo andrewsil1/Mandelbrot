@@ -56,8 +56,8 @@ internal static class ProductionChecks
         if (!largeStage && fixture != "original") throw new ArgumentException("Select a stage for alternate fixtures.");
         string[] names = ["MANDELBROT_DIAGNOSTICS", "MANDELBROT_METRICS", "MANDELBROT_VALIDATE", "MANDELBROT_INFLIGHT", "MANDELBROT_SLICE_ITERATIONS",
             "MANDELBROT_ACCELERATION", "MANDELBROT_READBACK_SLICES"];
-        string?[] previous = names.Select(Environment.GetEnvironmentVariable).ToArray();
-        string journal = (string)Assembly.GetType("MandelbrotGpu.DispatchJournal")!.GetProperty("LogPath")!.GetValue(null)!;
+        EnvironmentScope environment = new(names);
+        string journal = DispatchJournal.LogPath;
         if (largeStage)
         {
             string directory = Path.Combine(AppContext.BaseDirectory, "scaling-results");
@@ -163,8 +163,8 @@ internal static class ProductionChecks
                             || typeof(RenderTimings).GetProperties().Where(p => p.PropertyType == typeof(double) || p.PropertyType == typeof(int) || p.PropertyType == typeof(long))
                                 .Any(p => Convert.ToDouble(p.GetValue(production.Timings)) != 0))
                             throw new Exception("Diagnostics-off rendering changed output or still collected instrumentation.");
-                        using IDisposable buffers = (IDisposable)Activator.CreateInstance(Assembly.GetType("MandelbrotGpu.PerturbationBuffers")!, GraphicsDevice.GetDefault(), 1, 1)!;
-                        if ((bool)buffers.GetType().GetProperty("MetricsEnabled")!.GetValue(buffers)!)
+                        using PerturbationBuffers buffers = new(GraphicsDevice.GetDefault(), 1, 1);
+                        if (buffers.MetricsEnabled)
                             throw new Exception("Production enabled the GPU diagnostic metrics buffer.");
                         frameMilliseconds.Add(productionMs);
                         Progress(progressPath, new
@@ -214,7 +214,7 @@ internal static class ProductionChecks
             Progress(progressPath, new { phase = "failed", utc = DateTime.UtcNow, error = ex.ToString() });
             throw;
         }
-        finally { for (int i = 0; i < names.Length; i++) Environment.SetEnvironmentVariable(names[i], previous[i]); }
+        finally { environment.Dispose(); }
         Console.WriteLine(largeStage
             ? $"Production stage passed: {width}x{height}, {quietFrames} quiet frame(s), exact baseline images and zero unresolved pixels."
             : "Diagnostics-off production validation passed: exact Direct/FP64/DD images, both queue policies, no logging, timers, counters, metrics or sampling.");

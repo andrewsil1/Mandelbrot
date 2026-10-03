@@ -1,4 +1,3 @@
-using System.Reflection;
 using ComputeSharp;
 using MandelbrotGpu;
 
@@ -6,15 +5,8 @@ internal static class AccelerationChecks
 {
     public static void Run()
     {
+        using EnvironmentScope environment = new("MANDELBROT_ACCELERATION");
         const int width = 17, height = 9;
-        Assembly assembly = typeof(MandelbrotRenderer).Assembly;
-        Type bufferType = assembly.GetType("MandelbrotGpu.PerturbationBuffers")!;
-        MethodInfo dd = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-            .Single(m => m.Name == "RenderPerturbationDoubleDouble" && m.GetParameters().Length == 5);
-        MethodInfo fp = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-            .Single(m => m.Name == "RenderPerturbationFloat64" && m.GetParameters().Length == 3);
-        MethodInfo mpfr = assembly.GetType("MandelbrotGpu.MpfrMandelbrot")!.GetMethod("EscapeIterations")!;
-        FieldInfo timingField = typeof(MandelbrotRenderer).GetField("timings", BindingFlags.Instance | BindingFlags.NonPublic)!;
         long rebases = 0, skipped = 0;
 
         // Cover escaping references, tiny deltas near a filament, a periodic
@@ -47,7 +39,7 @@ internal static class AccelerationChecks
             for (int index = 0; index < expected.Length; index++)
             {
                 using MpfrComplex point = viewport.PointAtPixel(index % width, index / width, width, height);
-                expected[index] = (int)mpfr.Invoke(null, [point, fixture.Budget, (uint)768])!;
+                expected[index] = MpfrMandelbrot.EscapeIterations(point, fixture.Budget, 768);
             }
 
             foreach (bool doubleDouble in new[] { false, true })
@@ -61,11 +53,11 @@ internal static class AccelerationChecks
                 {
                     Environment.SetEnvironmentVariable("MANDELBROT_ACCELERATION", mode);
                     MandelbrotRenderer renderer = new(width, height);
-                    using IDisposable buffers = (IDisposable)Activator.CreateInstance(bufferType, GraphicsDevice.GetDefault(), expected.Length, fixture.Budget)!;
+                    using PerturbationBuffers buffers = new(GraphicsDevice.GetDefault(), expected.Length, fixture.Budget);
                     int[] actual = doubleDouble
-                        ? (int[])dd.Invoke(renderer, [viewport, center, fixture.Budget, Enumerable.Range(0, expected.Length).ToArray(), buffers])!
-                        : (int[])fp.Invoke(renderer, [viewport, center, fixture.Budget])!;
-                    RenderTimings metrics = (RenderTimings)timingField.GetValue(renderer)!;
+                        ? renderer.RenderPerturbationDoubleDouble(viewport, center, fixture.Budget, Enumerable.Range(0, expected.Length).ToArray(), buffers)
+                        : renderer.RenderPerturbationFloat64(viewport, center, fixture.Budget);
+                    RenderTimings metrics = renderer.Timings;
                     int failures = actual.Where((value, index) => value != -2 && value != expected[index]).Count();
                     int unresolved = actual.Count(value => value == -2);
                     if (failures != 0)
@@ -117,11 +109,9 @@ internal static class AccelerationChecks
     public static void CheckTransitionFallback(int width = 256, int height = 130)
     {
         const int budget = 6912;
-        MethodInfo fp = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-            .Single(m => m.Name == "RenderPerturbationFloat64" && m.GetParameters().Length == 3);
         using MpfrComplex center = new(MpfrFloat.FromDouble(-0.67323438570448868, 384), MpfrFloat.FromDouble(0.35743485497289235, 384));
         MandelbrotViewport view = MandelbrotViewport.FullSet(width, height).Zoom(center, Math.ScaleB(1, -40));
-        int[] raw = (int[])fp.Invoke(new MandelbrotRenderer(width, height), [view, center, budget])!;
+        int[] raw = new MandelbrotRenderer(width, height).RenderPerturbationFloat64(view, center, budget);
         int glitches = raw.Count(value => value == -2);
         System.Diagnostics.Stopwatch timer = System.Diagnostics.Stopwatch.StartNew();
         RenderResult result = new MandelbrotRenderer(width, height).Render(view, budget);

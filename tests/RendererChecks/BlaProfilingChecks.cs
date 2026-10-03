@@ -7,11 +7,7 @@ using MandelbrotGpu;
 internal static class BlaProfilingChecks
 {
     private static readonly Assembly Assembly = typeof(MandelbrotRenderer).Assembly;
-    private static readonly Type Buffer = Assembly.GetType("MandelbrotGpu.PerturbationBuffers")!;
     private static readonly FieldInfo Profiles = typeof(MandelbrotRenderer).GetField("blaPassProfiles", BindingFlags.Instance | BindingFlags.NonPublic)!;
-    private static readonly MethodInfo Raw = typeof(MandelbrotRenderer).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic)
-        .Single(m => m.Name == "RenderPerturbationDoubleDouble" && m.GetParameters().Length == 5);
-    private static readonly MethodInfo Mpfr = Assembly.GetType("MandelbrotGpu.MpfrMandelbrot")!.GetMethod("EscapeIterations")!;
     private static readonly string[] Variables = ["MANDELBROT_ACCELERATION", "MANDELBROT_BLA_PROFILE",
         "MANDELBROT_DIAGNOSTICS", "MANDELBROT_METRICS", "MANDELBROT_VALIDATE",
         "MANDELBROT_SLICE_ITERATIONS", "MANDELBROT_READBACK_SLICES", "MANDELBROT_INFLIGHT", "MANDELBROT_BLA_MIN_BLOCK"];
@@ -88,7 +84,7 @@ internal static class BlaProfilingChecks
 
     public static void CheckRendering()
     {
-        string?[] previous = Variables.Select(Environment.GetEnvironmentVariable).ToArray();
+        EnvironmentScope environment = new(Variables);
         long accepted = 0, searches = 0, skipped = 0;
         try
         {
@@ -110,9 +106,9 @@ internal static class BlaProfilingChecks
                     {
                         Environment.SetEnvironmentVariable("MANDELBROT_ACCELERATION", mode);
                         Environment.SetEnvironmentVariable("MANDELBROT_BLA_PROFILE", profile ? "1" : "0");
-                        using IDisposable buffers = (IDisposable)Activator.CreateInstance(Buffer, GraphicsDevice.GetDefault(), indices.Length, budget)!;
+                        using PerturbationBuffers buffers = new(GraphicsDevice.GetDefault(), indices.Length, budget);
                         MandelbrotRenderer renderer = new(width, height);
-                        return ((int[])Raw.Invoke(renderer, [view, reference, budget, indices, buffers])!, Profiles.GetValue(renderer));
+                        return (renderer.RenderPerturbationDoubleDouble(view, reference, budget, indices, buffers), Profiles.GetValue(renderer));
                     }
                     var rebase = Run("rebase", false);
                     Environment.SetEnvironmentVariable("MANDELBROT_BLA_MIN_BLOCK", "2");
@@ -129,7 +125,7 @@ internal static class BlaProfilingChecks
                     foreach (int position in Enumerable.Range(0, indices.Length).Where(i => i % Math.Max(1, indices.Length / 64) == 0))
                     {
                         using MpfrComplex point = view.PointAtPixel(indices[position] % width, indices[position] / width, width, height);
-                        int expected = (int)Mpfr.Invoke(null, [point, budget, (uint)768])!;
+                        int expected = MpfrMandelbrot.EscapeIterations(point, budget, 768);
                         foreach (int value in new[] { rebase.Values[position], accelerated.Values[position] })
                             if (value != -2 && value != expected) throw new Exception("Sparse BLA raw count failed 768-bit MPFR.");
                     }
@@ -150,13 +146,13 @@ internal static class BlaProfilingChecks
             if (accepted == 0 || searches == 0) throw new Exception("Debug BLA diagnostics fixtures did not exercise searches/accepted blocks.");
 #endif
         }
-        finally { for (int i = 0; i < Variables.Length; i++) Environment.SetEnvironmentVariable(Variables[i], previous[i]); }
+        finally { environment.Dispose(); }
         Console.WriteLine($"Sparse BLA raw/profile validation passed: 768-bit MPFR, alternate references, reversed/duplicate-free sparse maps, 32768 seam, exact profiling equivalence; skipped={skipped}, detailed searches={searches}, accepted={accepted} (Debug-only counters).");
     }
 
     public static void Run(int width, int height, string fixture, string path)
     {
-        string?[] previous = Variables.Select(Environment.GetEnvironmentVariable).ToArray();
+        EnvironmentScope environment = new(Variables);
         void Write(object value) => File.AppendAllText(path, JsonSerializer.Serialize(value) + Environment.NewLine);
         string[] modes = ["rebase", "bla"];
         try
@@ -187,7 +183,7 @@ internal static class BlaProfilingChecks
                     result.Timings.SkippedIterations, result.Timings.ScalarIterations,
                     ddPasses = Profiles.GetValue(renderer) });
             }
-            string journal = (string)Assembly.GetType("MandelbrotGpu.DispatchJournal")!.GetProperty("LogPath")!.GetValue(null)!;
+            string journal = DispatchJournal.LogPath;
             Environment.SetEnvironmentVariable("MANDELBROT_DIAGNOSTICS", "0");
             Environment.SetEnvironmentVariable("MANDELBROT_BLA_PROFILE", "0");
             // One warmup per mode followed by two balanced forward/reverse blocks.
@@ -219,12 +215,12 @@ internal static class BlaProfilingChecks
             }
             Write(new { phase = "passed" });
         }
-        finally { for (int i = 0; i < Variables.Length; i++) Environment.SetEnvironmentVariable(Variables[i], previous[i]); }
+        finally { environment.Dispose(); }
     }
 
     public static void RunSparse(int width, int height, string path)
     {
-        string?[] previous = Variables.Select(Environment.GetEnvironmentVariable).ToArray();
+        EnvironmentScope environment = new(Variables);
         void Write(object value) => File.AppendAllText(path, JsonSerializer.Serialize(value) + Environment.NewLine);
         const int budget = 4096;
         string[] modes = ["rebase", "bla2", "bla4", "bla8", "bla16"];
@@ -249,14 +245,14 @@ internal static class BlaProfilingChecks
                     Environment.SetEnvironmentVariable("MANDELBROT_DIAGNOSTICS", "1");
                     Environment.SetEnvironmentVariable("MANDELBROT_METRICS", "1");
                     Environment.SetEnvironmentVariable("MANDELBROT_BLA_PROFILE", "1");
-                    using IDisposable buffers = (IDisposable)Activator.CreateInstance(Buffer, GraphicsDevice.GetDefault(), indices.Length, budget)!;
+                    using PerturbationBuffers buffers = new(GraphicsDevice.GetDefault(), indices.Length, budget);
                     MandelbrotRenderer renderer = new(width, height);
-                    baselines[mode] = (int[])Raw.Invoke(renderer, [view, center, budget, indices, buffers])!;
+                    baselines[mode] = renderer.RenderPerturbationDoubleDouble(view, center, budget, indices, buffers);
                     foreach (object profile in (System.Collections.IEnumerable)Profiles.GetValue(renderer)!) CheckProfile(profile);
                     foreach (int position in Enumerable.Range(0, indices.Length).Where(i => i % Math.Max(1, indices.Length / 64) == 0))
                     {
                         using MpfrComplex point = view.PointAtPixel(indices[position] % width, indices[position] / width, width, height);
-                        int expected = (int)Mpfr.Invoke(null, [point, budget, (uint)768])!;
+                        int expected = MpfrMandelbrot.EscapeIterations(point, budget, 768);
                         if (baselines[mode][position] != -2 && baselines[mode][position] != expected)
                             throw new Exception("Sparse BLA benchmark failed raw 768-bit MPFR.");
                     }
@@ -269,8 +265,8 @@ internal static class BlaProfilingChecks
                 Environment.SetEnvironmentVariable("MANDELBROT_DIAGNOSTICS", "0");
                 Environment.SetEnvironmentVariable("MANDELBROT_METRICS", "0");
                 Environment.SetEnvironmentVariable("MANDELBROT_BLA_PROFILE", "0");
-                using IDisposable quietBuffers = (IDisposable)Activator.CreateInstance(Buffer, GraphicsDevice.GetDefault(), indices.Length, budget)!;
-                string journal = (string)Assembly.GetType("MandelbrotGpu.DispatchJournal")!.GetProperty("LogPath")!.GetValue(null)!;
+                using PerturbationBuffers quietBuffers = new(GraphicsDevice.GetDefault(), indices.Length, budget);
+                string journal = DispatchJournal.LogPath;
                 int[] order = [0, 1, 2, 3, 4,
                     0, 1, 2, 3, 4, 4, 3, 2, 1, 0,
                     0, 1, 2, 3, 4, 4, 3, 2, 1, 0];
@@ -286,11 +282,11 @@ internal static class BlaProfilingChecks
                     {
                         long length = locked.Length;
                         Stopwatch timer = Stopwatch.StartNew();
-                        values = (int[])Raw.Invoke(renderer, [view, center, budget, indices, quietBuffers])!;
+                        values = renderer.RenderPerturbationDoubleDouble(view, center, budget, indices, quietBuffers);
                         elapsed = timer.Elapsed.TotalMilliseconds;
                         if (locked.Length != length) throw new Exception("Sparse quiet pass changed its log.");
                     }
-                    RenderTimings timings = (RenderTimings)typeof(MandelbrotRenderer).GetField("timings", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(renderer)!;
+                    RenderTimings timings = renderer.Timings;
                     if (!values.SequenceEqual(baselines[mode]) || Profiles.GetValue(renderer) is not null
                         || typeof(RenderTimings).GetProperties().Any(p => Convert.ToDouble(p.GetValue(timings)) != 0))
                         throw new Exception("Sparse quiet pass changed counts or collected diagnostics.");
@@ -300,6 +296,6 @@ internal static class BlaProfilingChecks
             }
             Write(new { phase = "passed" });
         }
-        finally { for (int i = 0; i < Variables.Length; i++) Environment.SetEnvironmentVariable(Variables[i], previous[i]); }
+        finally { environment.Dispose(); }
     }
 }

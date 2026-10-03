@@ -30,6 +30,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
     private bool MeasureTimings => diagnostics || ProfileTimings;
     private readonly GraphicsDevice device = GraphicsDevice.GetDefault();
     private RenderTimings timings = new();
+    internal RenderTimings Timings => timings;
     private List<BlaPassProfile>? blaPassProfiles;
     private Guid renderId;
     private int referenceSequence;
@@ -52,7 +53,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
 
     // Separate policy from execution so the regression/profiling harness can
     // compare initial precisions through the same recovery and safety pipeline.
-    private RenderResult RenderWithMode(MandelbrotViewport viewport, int maxIterations, RenderMode initialMode)
+    internal RenderResult RenderWithMode(MandelbrotViewport viewport, int maxIterations, RenderMode initialMode)
     {
         using ViewportTelemetry? telemetry = ViewportTelemetry.Start(viewport, width, height, maxIterations);
         DiagnosticTimer timer = DiagnosticTimer.StartNew(MeasureTimings);
@@ -121,8 +122,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         {
             mode = RenderMode.PerturbationDoubleDouble;
             using MpfrComplex referencePoint = new(viewport.CenterX.Clone(), viewport.CenterY.Clone());
-            int[] active = Enumerable.Range(0, iterations.Length)
-                .Where(index => iterations[index] == EscapeClassification.Glitch).ToArray();
+            int[] active = SelectGlitchIndices(iterations);
             // Recovery only removes pixels from this list; retries fit in the
             // initial unresolved capacity rather than requiring a full frame.
             using PerturbationBuffers buffers = new(device, active.Length, maxIterations);
@@ -235,7 +235,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         return RenderPerturbationFloat64(viewport, referencePoint, maxIterations);
     }
 
-    private int[] RenderPerturbationFloat64(MandelbrotViewport viewport, MpfrComplex referencePoint, int maxIterations)
+    internal int[] RenderPerturbationFloat64(MandelbrotViewport viewport, MpfrComplex referencePoint, int maxIterations)
     {
         DiagnosticTimer timer = DiagnosticTimer.StartNew(MeasureTimings);
         DeepZoomReferenceOrbit reference = DeepZoomReferenceOrbit.Build(referencePoint, maxIterations);
@@ -273,15 +273,11 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         } : null, acceleration >= 2 && !table.HasSkips ? 1 : acceleration);
 
         timer.Restart();
-        for (int offset = 0; offset < pixelCount; offset += batchPixels)
-        {
-            int count = Math.Min(batchPixels, pixelCount - offset);
-            int completedSlices = 0;
-            using DispatchJournalGroup? journal = CreateJournalGroup(RenderMode.PerturbationFloat64, maxIterations, sliceIterations);
-            using BoundedGpuQueue queue = new(inFlight, status is null ? null : status.Check) { MeasureWait = MeasureTimings };
-            for (int sliceStart = 0; sliceStart < maxIterations; sliceStart += sliceIterations)
+        RunPerturbationSlices(RenderMode.PerturbationFloat64, pixelCount, maxIterations,
+            batchPixels, sliceIterations, readbackSlices, inFlight, status,
+            iterationBuffer, readback, iterations, null,
+            (offset, count, sliceStart, sliceEnd, journal, queue) =>
             {
-                int sliceEnd = Math.Min(sliceStart + sliceIterations, maxIterations);
                 Dispatch(RenderMode.PerturbationFloat64, offset,
                     count,
                     new MandelbrotPerturbationFloat64Shader(
@@ -305,22 +301,8 @@ public sealed partial class MandelbrotRenderer(int width, int height)
                         offset,
                         sliceStart,
                         sliceEnd,
-                        maxIterations), sliceStart, sliceEnd, journal, iterationBuffer, state, metrics, inFlight > 1 ? queue : null);
-                // The copy queue cannot read outputs until every preceding compute
-                // submission is consumed. Shared batch state stays ordered by UAV
-                // barriers on the one existing compute queue, never parallel queues.
-                bool pending = true;
-                if (GpuDispatchPolicy.ShouldReadSlice(++completedSlices, readbackSlices, sliceEnd == maxIterations))
-                {
-                    queue.Drain();
-                    pending = ReadSlice(iterationBuffer, readback, iterations.AsSpan(offset, count), offset, RenderMode.PerturbationFloat64);
-                    PublishPixels?.Invoke(iterations, offset, count, null);
-                }
-                else if (MeasureTimings) timings.SkippedSliceReadbacks++;
-                if (journal is { HasPending: false }) journal.Checkpoint(!pending || sliceEnd == maxIterations);
-                if (!pending) break;
-            }
-        }
+                        maxIterations), sliceStart, sliceEnd, journal, iterationBuffer, state, metrics, queue);
+            });
         timings.Float64SliceLoopMilliseconds += timer.Elapsed.TotalMilliseconds;
 
         EnsureComplete(iterations);
@@ -343,7 +325,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         return (iterations, referencePasses);
     }
 
-    private int[] RenderPerturbationDoubleDouble(MandelbrotViewport viewport, MpfrComplex referencePoint, int maxIterations, int[] pixelIndices, PerturbationBuffers buffers)
+    internal int[] RenderPerturbationDoubleDouble(MandelbrotViewport viewport, MpfrComplex referencePoint, int maxIterations, int[] pixelIndices, PerturbationBuffers buffers)
     {
         DiagnosticTimer timer = DiagnosticTimer.StartNew(MeasureTimings);
         DeepZoomReferenceOrbit reference = DeepZoomReferenceOrbit.Build(referencePoint, maxIterations);
@@ -410,15 +392,11 @@ public sealed partial class MandelbrotRenderer(int width, int height)
             readbackBytes = (long)buffers.Readback.Length * sizeof(int)
         } : null, acceleration >= 2 && !table.HasSkips ? 1 : acceleration);
         timer.Restart();
-        for (int workOffset = 0; workOffset < pixelCount; workOffset += batchPixels)
-        {
-            int count = Math.Min(pixelCount - workOffset, batchPixels);
-            int completedSlices = 0;
-            using DispatchJournalGroup? journal = CreateJournalGroup(RenderMode.PerturbationDoubleDouble, maxIterations, sliceIterations);
-            using BoundedGpuQueue queue = new(inFlight, status is null ? null : status.Check) { MeasureWait = MeasureTimings };
-            for (int sliceStart = 0; sliceStart < maxIterations; sliceStart += sliceIterations)
+        RunPerturbationSlices(RenderMode.PerturbationDoubleDouble, pixelCount, maxIterations,
+            batchPixels, sliceIterations, readbackSlices, inFlight, status,
+            buffers.Output, buffers.Readback, iterations, pixelIndices,
+            (workOffset, count, sliceStart, sliceEnd, journal, queue) =>
             {
-                int sliceEnd = Math.Min(sliceStart + sliceIterations, maxIterations);
                 Dispatch(RenderMode.PerturbationDoubleDouble, workOffset,
                     count,
                     new MandelbrotPerturbationDoubleDoubleShader(
@@ -455,19 +433,8 @@ public sealed partial class MandelbrotRenderer(int width, int height)
                         workOffset,
                         sliceStart,
                         sliceEnd,
-                        maxIterations), sliceStart, sliceEnd, journal, buffers.Output, buffers.State, buffers.Metrics, inFlight > 1 ? queue : null);
-                bool pending = true;
-                if (GpuDispatchPolicy.ShouldReadSlice(++completedSlices, readbackSlices, sliceEnd == maxIterations))
-                {
-                    queue.Drain();
-                    pending = ReadSlice(buffers.Output, buffers.Readback, iterations.AsSpan(workOffset, count), workOffset, RenderMode.PerturbationDoubleDouble);
-                    PublishPixels?.Invoke(iterations, workOffset, count, pixelIndices);
-                }
-                else if (MeasureTimings) timings.SkippedSliceReadbacks++;
-                if (journal is { HasPending: false }) journal.Checkpoint(!pending || sliceEnd == maxIterations);
-                if (!pending) break;
-            }
-        }
+                        maxIterations), sliceStart, sliceEnd, journal, buffers.Output, buffers.State, buffers.Metrics, queue);
+            });
         timings.DoubleDoubleSliceLoopMilliseconds += timer.Elapsed.TotalMilliseconds;
         EnsureComplete(iterations);
         if (MeasureTimings) timings.PerturbationPixelEvaluations += pixelCount;
@@ -475,6 +442,40 @@ public sealed partial class MandelbrotRenderer(int width, int height)
             buffers.BlaProfileEnabled ? BlaPassProfile.MetricStride : 3, blaProfile);
 
         return iterations;
+    }
+
+    // One delegate is created per reference pass; the hot slice loop only invokes it.
+    // Buffer preparation and shader construction remain specific to each precision.
+    private void RunPerturbationSlices(RenderMode mode, int pixelCount, int maxIterations,
+        int batchPixels, int sliceIterations, int readbackSlices, int inFlight, GpuDeviceStatus? status,
+        ReadWriteBuffer<int> output, ReadBackBuffer<int> readback, int[] iterations, int[]? pixelIndices,
+        Action<int, int, int, int, DispatchJournalGroup?, BoundedGpuQueue?> dispatchSlice)
+    {
+        for (int offset = 0; offset < pixelCount; offset += batchPixels)
+        {
+            int count = Math.Min(batchPixels, pixelCount - offset);
+            int completedSlices = 0;
+            using DispatchJournalGroup? journal = CreateJournalGroup(mode, maxIterations, sliceIterations);
+            using BoundedGpuQueue queue = new(inFlight, status is null ? null : status.Check) { MeasureWait = MeasureTimings };
+            for (int sliceStart = 0; sliceStart < maxIterations; sliceStart += sliceIterations)
+            {
+                int sliceEnd = Math.Min(sliceStart + sliceIterations, maxIterations);
+                dispatchSlice(offset, count, sliceStart, sliceEnd, journal, inFlight > 1 ? queue : null);
+                // The copy queue cannot read outputs until every preceding compute
+                // submission is consumed. Shared batch state stays ordered by UAV
+                // barriers on the one existing compute queue, never parallel queues.
+                bool pending = true;
+                if (GpuDispatchPolicy.ShouldReadSlice(++completedSlices, readbackSlices, sliceEnd == maxIterations))
+                {
+                    queue.Drain();
+                    pending = ReadSlice(output, readback, iterations.AsSpan(offset, count), offset, mode);
+                    PublishPixels?.Invoke(iterations, offset, count, pixelIndices);
+                }
+                else if (MeasureTimings) timings.SkippedSliceReadbacks++;
+                if (journal is { HasPending: false }) journal.Checkpoint(!pending || sliceEnd == maxIterations);
+                if (!pending) break;
+            }
+        }
     }
 
     private void BeginPass(int maxIterations, object? resources, int shaderAcceleration = 0)
@@ -733,7 +734,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         }
     }
 
-    private int AddExtraReferencePasses(MandelbrotViewport viewport, int[] iterations, int maxIterations, PerturbationBuffers buffers)
+    internal int AddExtraReferencePasses(MandelbrotViewport viewport, int[] iterations, int maxIterations, PerturbationBuffers buffers)
     {
         int referencePasses = 0;
         int previousGlitches = CountGlitches(iterations);
@@ -742,8 +743,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         // reference does not change it; a successful one only removes entries.
         // Repeated full-image scans are particularly costly for thin glitch
         // bands in large images whose references cannot resolve the band.
-        int[] activeIndices = Enumerable.Range(0, iterations.Length)
-            .Where(index => iterations[index] == EscapeClassification.Glitch).ToArray();
+        int[] activeIndices = SelectGlitchIndices(iterations);
         HashSet<int> failedTiles = [];
 
         for (int pass = 0; pass < MaxExtraReferences; pass++)
@@ -786,13 +786,13 @@ public sealed partial class MandelbrotRenderer(int width, int height)
             // reference choose from all tiles again.
             failedTiles.Clear();
             previousGlitches = remainingGlitches;
-            activeIndices = activeIndices.Where(index => iterations[index] == EscapeClassification.Glitch).ToArray();
+            activeIndices = SelectGlitchIndices(iterations, activeIndices);
         }
 
         return referencePasses;
     }
 
-    private static int MergeResolved(int[] iterations, int[] activeIndices, int[] candidate)
+    internal static int MergeResolved(int[] iterations, int[] activeIndices, int[] candidate)
     {
         int resolved = 0;
         for (int index = 0; index < activeIndices.Length; index++)
@@ -806,9 +806,8 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         return resolved;
     }
 
-    private GlitchTile? FindWorstGlitchTile(int[] iterations, HashSet<int> excludedTiles)
-        => FindWorstActiveGlitchTile(Enumerable.Range(0, iterations.Length)
-            .Where(index => iterations[index] == EscapeClassification.Glitch).ToArray(), excludedTiles);
+    internal GlitchTile? FindWorstGlitchTile(int[] iterations, HashSet<int> excludedTiles)
+        => FindWorstActiveGlitchTile(SelectGlitchIndices(iterations), excludedTiles);
 
     private GlitchTile? FindWorstActiveGlitchTile(int[] activeIndices, HashSet<int> excludedTiles)
     {
@@ -880,7 +879,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         return new GlitchTile(bestTileIndex, referenceX, referenceY, bestCount);
     }
 
-    private readonly record struct GlitchTile(int TileIndex, int ReferenceX, int ReferenceY, int GlitchCount);
+    internal readonly record struct GlitchTile(int TileIndex, int ReferenceX, int ReferenceY, int GlitchCount);
 
     private static int CountGlitches(int[] iterations)
     {
@@ -908,10 +907,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
 
     private int RepairGlitches(MandelbrotViewport viewport, int[] iterations, int maxIterations)
     {
-        int[] glitchIndexes = iterations
-            .Select((iteration, index) => iteration == EscapeClassification.Glitch ? index : -1)
-            .Where(index => index >= 0)
-            .ToArray();
+        int[] glitchIndexes = SelectGlitchIndices(iterations);
         var repaired = RepairWithinBudget(glitchIndexes, maxIterations, TargetFinalRepairIterations, index =>
         {
             // Each repair is independent, so CPU parallelism is useful here.
@@ -955,23 +951,12 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         return (count, work);
     }
 
-    private void GetFloat64Deltas(MandelbrotViewport viewport, MpfrComplex referencePoint, out double leftDelta, out double topDelta, out double stepX, out double stepY)
-    {
-        using MpfrFloat widthFloat = viewport.Width;
-        using MpfrFloat halfWidth = widthFloat.Multiply(0.5);
-        using MpfrFloat halfHeight = viewport.Height.Multiply(0.5);
-        using MpfrFloat left = viewport.CenterX.Subtract(halfWidth);
-        using MpfrFloat top = viewport.CenterY.Add(halfHeight);
-        using MpfrFloat leftDeltaFloat = left.Subtract(referencePoint.Real);
-        using MpfrFloat topDeltaFloat = top.Subtract(referencePoint.Imaginary);
-        using MpfrFloat stepXFloat = widthFloat.Multiply(1.0 / width);
-        using MpfrFloat stepYFloat = viewport.Height.Multiply(1.0 / height);
+    private static int[] SelectGlitchIndices(int[] iterations, IEnumerable<int>? indices = null)
+        => (indices ?? Enumerable.Range(0, iterations.Length))
+            .Where(index => iterations[index] == EscapeClassification.Glitch).ToArray();
 
-        leftDelta = leftDeltaFloat.ToDouble();
-        topDelta = topDeltaFloat.ToDouble();
-        stepX = stepXFloat.ToDouble();
-        stepY = stepYFloat.ToDouble();
-    }
+    private void GetFloat64Deltas(MandelbrotViewport viewport, MpfrComplex referencePoint, out double leftDelta, out double topDelta, out double stepX, out double stepY)
+        => (leftDelta, topDelta, stepX, stepY) = GetDeltas(viewport, referencePoint, static value => value.ToDouble());
 
     private void GetDoubleDoubleDeltas(
         MandelbrotViewport viewport,
@@ -980,6 +965,10 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         out DoubleDouble topDelta,
         out DoubleDouble stepX,
         out DoubleDouble stepY)
+        => (leftDelta, topDelta, stepX, stepY) = GetDeltas(viewport, referencePoint, static value => value.ToDoubleDouble());
+
+    private (T Left, T Top, T StepX, T StepY) GetDeltas<T>(
+        MandelbrotViewport viewport, MpfrComplex referencePoint, Func<MpfrFloat, T> convert)
     {
         using MpfrFloat widthFloat = viewport.Width;
         using MpfrFloat halfWidth = widthFloat.Multiply(0.5);
@@ -991,9 +980,7 @@ public sealed partial class MandelbrotRenderer(int width, int height)
         using MpfrFloat stepXFloat = widthFloat.Multiply(1.0 / width);
         using MpfrFloat stepYFloat = viewport.Height.Multiply(1.0 / height);
 
-        leftDelta = leftDeltaFloat.ToDoubleDouble();
-        topDelta = topDeltaFloat.ToDoubleDouble();
-        stepX = stepXFloat.ToDoubleDouble();
-        stepY = stepYFloat.ToDoubleDouble();
+        // Convert inside the owning scope; no native MPFR value escapes it.
+        return (convert(leftDeltaFloat), convert(topDeltaFloat), convert(stepXFloat), convert(stepYFloat));
     }
 }
