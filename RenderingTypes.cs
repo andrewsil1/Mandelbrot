@@ -1,5 +1,35 @@
 namespace MandelbrotGpu;
 
+public enum RenderMode
+{
+    // Direct one-thread-per-pixel FP64 iteration.
+    DirectFloat64,
+
+    // MPFR reference orbit plus FP64 perturbation deltas on the GPU.
+    PerturbationFloat64,
+
+    // MPFR reference orbit plus software double-double perturbation on the GPU.
+    PerturbationDoubleDouble
+}
+
+// Returned by the renderer so the UI can display both the finished image and
+// the precision/repair diagnostics that explain deep-zoom quality.
+public sealed record RenderResult(
+    int[] Pixels,
+    RenderMode Mode,
+    int InitialGlitchCount,
+    int RepairedCount,
+    int UnresolvedGlitchCount,
+    int ReferencePasses,
+    int FinalRepairLimit,
+    RenderTimings Timings,
+    RenderValidation? Validation)
+{
+    internal int[]? HistogramPalette { get; init; }
+    public int Float64GlitchCount { get; init; }
+    public bool UsedDoubleDoubleFallback { get; init; }
+}
+
 // These are host wall-clock measurements, not GPU timestamp queries or measured
 // GPU utilization. Dispatch is exclusive host recording/submission plus waits;
 // asynchronous submission-to-observed-completion ages can overlap and are not summed.
@@ -73,4 +103,19 @@ public sealed class RenderTimings
         $"perturbation pixel evaluations: {PerturbationPixelEvaluations:n0}" +
         (Environment.GetEnvironmentVariable("MANDELBROT_METRICS") == "1"
             ? $"; rebases: {Rebases:n0}; skipped iterations: {SkippedIterations:n0}; scalar iterations: {ScalarIterations:n0}" : string.Empty);
+}
+
+internal static class EscapeClassification
+{
+    // Non-negative values are normal escape iteration counts. Negative sentinel
+    // values keep special classifications out of the histogram.
+    public const int Interior = -1;
+
+    // A perturbation glitch means the GPU orbit became numerically suspect.
+    // These pixels are either resolved by another reference orbit or repaired
+    // with direct MPFR evaluation on the CPU.
+    public const int Glitch = -2;
+
+    // Only used between GPU slices; never passed to coloring or CPU repair.
+    public const int Pending = -3;
 }
